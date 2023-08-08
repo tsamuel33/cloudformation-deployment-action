@@ -31,6 +31,10 @@ inputs:
   assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     required: false
+  config-path:
+    description: Path to the config file from the root of your GitHub repository
+    required: false
+    default: 'config'
 
 outputs:
   branch_type:
@@ -65,6 +69,8 @@ runs:
       shell: bash
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
+        BRANCH=${{ github.ref_name }}
+        echo $BRANCH
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == null || inputs.job_type == 'setup'
