@@ -11,6 +11,8 @@ jobs:
   SetConfigVariables:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Lint
         uses: ./.github/actions/cf-action
         with:
