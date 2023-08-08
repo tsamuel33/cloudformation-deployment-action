@@ -68,9 +68,9 @@ runs:
       id: branch_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
         BRANCH=${{ github.ref_name }}
         echo $BRANCH
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == null || inputs.job_type == 'setup'

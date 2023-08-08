@@ -11,11 +11,14 @@ logger = logging.getLogger(Path(__file__).name)
 parser = argparse.ArgumentParser(description='Accept AWS parameters')
 parser.add_argument('--branch', type=str, help='GitHub branch containing templates', required=True)
 parser.add_argument('--github_env_var', type=str, help='Name of the variable to be set in the GitHub environment', required=False)
+parser.add_argument('--config_path', type=str, help='Path to the config file in your GitHub repo', required=False)
 args = vars(parser.parse_args())
 
 
 def main(branch, var):
     logger.info("Setting environment variable: {}...".format(var))
+    logger.info("Current working directory:")
+    logger.info(Path.cwd().as_posix())
     config = Configuration(branch)
     branch_type = config.branch_type
     if var == "branch_type":
