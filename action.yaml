@@ -1,0 +1,196 @@
+name: CloudFormation Testing and Deployment
+description: >-
+  Action to lint, validate vs. policy as code (optional) and deploy
+  CloudFormation templates
+
+inputs:
+  aws-partition:
+    description: 'The AWS partition in which the templates will be deployed'
+    default: 'aws'
+    required: false
+  job_type:
+    description: The type of action being performed on the templates
+    required: true
+  branch_type:
+    description: >-
+      The type of branch being assessed. Valid values are 'major' (deployment branch)
+      or 'minor' (feature branch)
+    required: false
+  github_secret_type:
+    description: The type of secret containing the AWS account number (repository, environment, or organization)
+    required: false
+  policy_as_code_provider:
+    description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+    required: false
+  account_secret_name:
+    description: Name of the GitHub secret containing the AWS account number
+    required: false
+  environment:
+    description: Application environment associated with the target branch
+    required: false
+  assumed_role_name:
+    description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+    required: false
+
+outputs:
+  branch_type:
+    description: >-
+      The type of branch being assessed. Valid values are 'major' (deployment branch)
+      or 'minor' (feature branch)
+    value: ${{ steps.branch_type.outputs.branch_type }}
+  github_secret_type:
+    description: The type of secret containing the AWS account number (repository, environment, or organization)
+    value: ${{ steps.secret_type.outputs.github_secret_type }}
+  policy_as_code_provider:
+    description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+    value: ${{ steps.validation_type.outputs.policy_as_code_provider }}
+  account_secret_name:
+    description: Name of the GitHub secret containing the AWS account number
+    value: ${{ steps.secret_name.outputs.account_number_secret_name }}
+  environment:
+    description: Application environment associated with the target branch
+    value: ${{ steps.environment.outputs.environment }}
+  assumed_role_name:
+    description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+    value: ${{ steps.assumed_role_name.outputs.github_assumed_role_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Get Branch Type
+      if: inputs.branch_type == null || inputs.job_type == 'setup'
+      id: branch_type
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
+        echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Environment
+      if: inputs.environment == null || inputs.job_type == 'setup'
+      id: environment
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment)
+        echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Secret Type
+      if: inputs.secret_type == null || inputs.job_type == 'setup'
+      id: secret_type
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type)
+        echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Validation Type
+      if: inputs.validation_type == null || inputs.job_type == 'setup'
+      id: validation_type
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider)
+        echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Secret Name
+      if: inputs.secret_name == null || inputs.job_type == 'setup'
+      id: secret_name
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name)
+        echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Assumed Role Name
+      if: inputs.assumed_role_name == null || inputs.job_type == 'setup'
+      id: assumed_role_name
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name)
+        echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Install Linting Dependencies
+      if: inputs.job_type == 'lint'
+      shell: bash
+      run: |
+        echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
+        pip install cfn-lint GitPython jsonpath-ng --trusted-host files.pythonhosted.org
+    - name: Lint Templates
+      if: inputs.job_type == 'lint'
+      shell: bash
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
+
+# jobs:
+#   SetConfigVariables:
+#     runs-on: ubuntu-latest
+    
+#     outputs:
+#       branch_type: ${{ steps.branch_type.outputs.branch_type }}
+#       github_secret_type: ${{ steps.secret_type.outputs.github_secret_type }}
+#       policy_as_code_provider: ${{ steps.validation_type.outputs.policy_as_code_provider }}
+#       account_secret_name: ${{ steps.secret_name.outputs.account_number_secret_name }}
+#       environment: ${{ steps.environment.outputs.environment }}
+#       assumed_role_name: ${{ steps.assumed_role_name.outputs.github_assumed_role_name }}
+#   Test:
+#     runs-on: ubuntu-latest
+#     needs: SetConfigVariables
+#     environment: ${{ needs.SetConfigVariables.outputs.github_secret_type == 'environment' && needs.SetConfigVariables.outputs.environment || null }}
+#     env:
+#       SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#       - name: Install Linting Dependencies
+#         run: |
+#           echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
+#           pip install cfn-lint GitPython jsonpath-ng --quiet
+#       - name: Lint Templates
+#         run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
+#       - name: Install cfn-guard
+#         if: needs.SetConfigVariables.outputs.policy_as_code_provider == 'guard'
+#         run: |
+#           curl --proto ''=https'' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
+#           GUARD_DIR=~/.guard/bin
+#           echo $GUARD_DIR >> $GITHUB_PATH
+#       - name: Install Open Policy Agent
+#         if: needs.SetConfigVariables.outputs.policy_as_code_provider == 'opa'
+#         run: |
+#           curl -L -o opa https://openpolicyagent.org/downloads/v0.55.0/opa_linux_amd64_static
+#           chmod 755 ./opa
+#       - name: Configure AWS credentials
+#         if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None' && needs.SetConfigVariables.outputs.branch_type == 'major'
+#         uses: aws-actions/configure-aws-credentials@v1-node16
+#         with:
+#           role-to-assume: arn:${{ inputs.aws-partition }}:iam::${{ secrets[env.SECRET_NAME] }}:role/${{ env.ASSUMED_ROLE_NAME }}
+#           role-session-name: GASession
+#           aws-region: ${{ env.AWS_REGION }}
+#         env:
+#           AWS_REGION : "us-east-1"
+#           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
+#           ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
+#       - name: Policy as Code Validation
+#         if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None'
+#         run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && secrets[env.SECRET_NAME] || '123456789012' }} --job validate
+#   Deploy:
+#     runs-on: ubuntu-latest
+#     needs: [SetConfigVariables, Test]
+#     if: needs.SetConfigVariables.outputs.branch_type == 'major'
+#     environment: ${{ needs.SetConfigVariables.outputs.github_secret_type == 'environment' && needs.SetConfigVariables.outputs.environment || null }}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#       - name: Install Deployment Dependencies
+#         run: |
+#           echo "Installing boto3, GitPython, and jsonpath-ng via pip..."
+#           pip install boto3 GitPython jsonpath-ng --quiet
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v1-node16
+#         with:
+#           role-to-assume: arn:${{ inputs.aws-partition }}:iam::${{ secrets[env.SECRET_NAME] }}:role/${{ env.ASSUMED_ROLE_NAME }}
+#           role-session-name: GASession
+#           aws-region: ${{ env.AWS_REGION }}
+#         env:
+#           AWS_REGION : "us-east-1"
+#           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
+#           ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
+#       - name: Deploy Templates
+#         env:
+#           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
+#         run: |
+#           RESULT=$(python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ secrets[env.SECRET_NAME] }} --job deploy)
+#           if [ $RESULT -ne 0 ]; then
+#             echo "ERROR: See logs for details."
+#             exit $RESULT
+#           fi
