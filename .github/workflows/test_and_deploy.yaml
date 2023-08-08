@@ -1,14 +1,49 @@
 name: Test and Deploy CloudFormation Templates
 on:
-  push:
-    # paths:
-    #   - 'deployments/**'
+  workflow_call:
+    inputs:
+      aws-partition:
+        description: 'The AWS partition in which the templates will be deployed'
+        default: 'aws'
+        required: false
+        type: string
+      job_type:
+        description: The type of action being performed on the templates
+        required: true
+        type: string
+      branch_type:
+        description: >-
+          The type of branch being assessed. Valid values are 'major' (deployment branch)
+          or 'minor' (feature branch)
+        required: false
+        type: string
+      github_secret_type:
+        description: The type of secret containing the AWS account number (repository, environment, or organization)
+        required: false
+        type: string
+      policy_as_code_provider:
+        description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+        required: false
+        type: string
+      account_secret_name:
+        description: Name of the GitHub secret containing the AWS account number
+        required: false
+        type: string
+      environment:
+        description: Application environment associated with the target branch
+        required: false
+        type: string
+      assumed_role_name:
+        description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+        required: false
+        type: string
+
 permissions:
   id-token: write
   contents: write
 
 jobs:
-  SetConfigVariables:
+  Setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,44 +51,52 @@ jobs:
       - name: Lint
         uses: ./.github/actions/cf-action
         with:
-          # aws-region: ${{ env.AWS_REGION }}
+          job_type: setup
+          aws-partition: 'aws'
+  Lint:
+    runs-on: ubuntu-latest
+    needs: Setup
+    if: inputs.job_type == 'lint'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Lint
+        uses: ./.github/actions/cf-action
+        with:
           job_type: lint
-        # env:
-        #   AWS_REGION : "us-east-1"
-        #   SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
-        #   ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
-    #   - name: Checkout
-    #     uses: actions/checkout@v3
-    #   - name: Get Branch Type
-    #     id: branch_type
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
-    #       echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
-    #   - name: Get Environment
-    #     id: environment
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment)
-    #       echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
-    #   - name: Get Secret Type
-    #     id: secret_type
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type)
-    #       echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
-    #   - name: Get Validation Type
-    #     id: validation_type
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider)
-    #       echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
-    #   - name: Get Secret Name
-    #     id: secret_name
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name)
-    #       echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    #   - name: Get Assumed Role Name
-    #     id: assumed_role_name
-    #     run: |
-    #       SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name)
-    #       echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
+          aws-partition: 'aws'
+          # branch_type: ${{ }}
+          # github_secret_type:
+          # policy_as_code_provider:
+          # account_secret_name:
+          # environment:
+          # assumed_role_name:
+  # Validate:
+  #   runs-on: ubuntu-latest
+  #   needs: Setup
+  #   if: inputs.job_type == 'validate'
+  #   # environment:
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Lint
+  #       uses: ./.github/actions/cf-action
+  #       with:
+  #         job_type: validate
+  #         aws-partition: 'aws'
+  # Deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: Setup
+  #   if: inputs.job_type == 'deploy'
+  #   # environment:
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Lint
+  #       uses: ./.github/actions/cf-action
+  #       with:
+  #         job_type: deploy
+  #         aws-partition: 'aws'
     # outputs:
     #   branch_type: ${{ steps.branch_type.outputs.branch_type }}
     #   github_secret_type: ${{ steps.secret_type.outputs.github_secret_type }}
