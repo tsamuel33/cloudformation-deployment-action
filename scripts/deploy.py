@@ -33,10 +33,13 @@ def validate_templates(configuration, pipeline_object, account_number):
         logger.info("No policy as code provider selected. Skipping validation...")
         exit_code = 0
         return exit_code
-    if validation_engine == "guard":
+    if validation_engine.lower() == "guard":
         exit_code = pipeline_object.cfn_guard_validate(account, role_name, check_period, stack_prefix, protection, upload_bucket_name)
-    elif validation_engine == "opa":
+    elif validation_engine.lower() == "opa":
         exit_code = pipeline_object.opa_validate(account, role_name, check_period, stack_prefix, protection, upload_bucket_name)
+    else:
+        logger.info("Invalid policy as code provider selected. Skipping validation...")
+        exit_code = 0
     return exit_code
 
 def deploy(configuration, pipeline_object, account_number):
