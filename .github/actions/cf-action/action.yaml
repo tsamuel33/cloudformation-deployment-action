@@ -31,6 +31,10 @@ inputs:
   assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     required: false
+  config-path:
+    description: Path to the config file from the root of your GitHub repository
+    required: false
+    default: 'config'
 
 outputs:
   branch_type:
@@ -57,60 +61,75 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Checkout
+    - name: Checkout Template Repo
       uses: actions/checkout@v3
+      with:
+        path: main
+    - name: Checkout Action Repo
+      uses: actions/checkout@v3
+      with:
+        repository: tsamuel33/cloudformation-deployment-action
+        path: action
+        token: ${{ github.token }}
     - name: Get Branch Type
       if: inputs.branch_type == null || inputs.job_type == 'setup'
+      working-directory: action
       id: branch_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config-path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == null || inputs.job_type == 'setup'
+      working-directory: action
       id: environment
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config-path }})
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
       if: inputs.secret_type == null || inputs.job_type == 'setup'
+      working-directory: action
       id: secret_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config-path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
       if: inputs.validation_type == null || inputs.job_type == 'setup'
+      working-directory: action
       id: validation_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config-path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
       if: inputs.secret_name == null || inputs.job_type == 'setup'
+      working-directory: action
       id: secret_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config-path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
       if: inputs.assumed_role_name == null || inputs.job_type == 'setup'
+      working-directory: action
       id: assumed_role_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name)
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config-path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Install Linting Dependencies
       if: inputs.job_type == 'lint'
       shell: bash
       run: |
         echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
-        pip install cfn-lint GitPython jsonpath-ng --trusted-host files.pythonhosted.org
+        pip install cfn-lint GitPython jsonpath-ng --quiet
     - name: Lint Templates
       if: inputs.job_type == 'lint'
+      working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config-path }}
 
 # jobs:
 #   SetConfigVariables:
