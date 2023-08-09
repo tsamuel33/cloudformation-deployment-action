@@ -2,7 +2,7 @@ name: Test and Deploy CloudFormation Templates
 on:
   workflow_call:
     inputs:
-      aws-partition:
+      aws_partition:
         description: 'The AWS partition in which the templates will be deployed'
         default: 'aws'
         required: false
@@ -37,10 +37,15 @@ on:
         description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
         required: false
         type: string
-      config-path:
+      config_path:
         description: Path to the config file from the root of your GitHub repository
         required: false
         default: 'config'
+        type: string
+      aws_region:
+        description: Main AWS region used to assume IAM role
+        required: false
+        default: 'us-east-1'
         type: string
 
 permissions:
@@ -48,7 +53,7 @@ permissions:
   contents: write
 
 jobs:
-  Setup:
+  Get_Config_Settings:
     runs-on: ubuntu-latest
     steps:
       - name: Get Config Settings
@@ -56,7 +61,7 @@ jobs:
         uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
           job_type: setup
-          aws-partition: 'aws'
+          aws_partition: 'aws'
     outputs:
           branch_type: ${{ steps.config.outputs.branch_type }}
           github_secret_type: ${{ steps.config.outputs.github_secret_type }}
@@ -64,38 +69,42 @@ jobs:
           account_secret_name: ${{ steps.config.outputs.account_secret_name }}
           environment: ${{ steps.config.outputs.environment }}
           assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
-  Lint:
+  Lint_Templates:
     runs-on: ubuntu-latest
-    needs: Setup
+    needs: Get_Config_Settings
     if: inputs.job_type == 'lint'
     steps:
-      - name: Lint
+      - name: Lint Templates
         uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
           job_type: lint
-          aws-partition: 'aws'
-          branch_type: ${{ needs.Setup.outputs.branch_type }}
-          github_secret_type: ${{ needs.Setup.outputs.github_secret_type }}
-          policy_as_code_provider: ${{ needs.Setup.outputs.policy_as_code_provider }}
-          account_secret_name: ${{ needs.Setup.outputs.account_secret_name }}
-          environment: ${{ needs.Setup.outputs.environment }}
-          assumed_role_name: ${{ needs.Setup.outputs.assumed_role_name }}
-  # Validate:
-  #   runs-on: ubuntu-latest
-  #   needs: Setup
-  #   if: inputs.job_type == 'validate'
-  #   # environment:
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Lint
-  #       uses: ./.github/actions/cf-action
-  #       with:
-  #         job_type: validate
-  #         aws-partition: 'aws'
+          aws_partition: 'aws'
+          branch_type: ${{ needs.Get_Config_Settings.outputs.branch_type }}
+          github_secret_type: ${{ needs.Get_Config_Settings.outputs.github_secret_type }}
+          policy_as_code_provider: ${{ needs.Get_Config_Settings.outputs.policy_as_code_provider }}
+          account_secret_name: ${{ needs.Get_Config_Settings.outputs.account_secret_name }}
+          environment: ${{ needs.Get_Config_Settings.outputs.environment }}
+          assumed_role_name: ${{ needs.Get_Config_Settings.outputs.assumed_role_name }}
+  Policy_As_Code_Validation:
+    runs-on: ubuntu-latest
+    needs: Get_Config_Settings
+    if: inputs.job_type == 'validate'
+    environment: ${{ inputs.github_secret_type == 'environment' && needs.Get_Config_Settings.outputs.environment || null }}
+    steps:
+      - name: Validate Templates
+        uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
+        with:
+          job_type: validate
+          aws_partition: 'aws'
+          branch_type: ${{ needs.Get_Config_Settings.outputs.branch_type }}
+          github_secret_type: ${{ needs.Get_Config_Settings.outputs.github_secret_type }}
+          policy_as_code_provider: ${{ needs.Get_Config_Settings.outputs.policy_as_code_provider }}
+          account_secret_name: ${{ needs.Get_Config_Settings.outputs.account_secret_name }}
+          environment: ${{ needs.Get_Config_Settings.outputs.environment }}
+          assumed_role_name: ${{ needs.Get_Config_Settings.outputs.assumed_role_name }}
   # Deploy:
   #   runs-on: ubuntu-latest
-  #   needs: Setup
+  #   needs: Get_Config_Settings
   #   if: inputs.job_type == 'deploy'
   #   # environment:
   #   steps:
@@ -105,7 +114,7 @@ jobs:
   #       uses: ./.github/actions/cf-action
   #       with:
   #         job_type: deploy
-  #         aws-partition: 'aws'
+  #         aws_partition: 'aws'
     # outputs:
     #   branch_type: ${{ steps.branch_type.outputs.branch_type }}
     #   github_secret_type: ${{ steps.secret_type.outputs.github_secret_type }}
