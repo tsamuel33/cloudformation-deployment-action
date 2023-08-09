@@ -129,7 +129,7 @@ runs:
       if: inputs.job_type == 'lint'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config-path }}
 
 # jobs:
 #   SetConfigVariables:

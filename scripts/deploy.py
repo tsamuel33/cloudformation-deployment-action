@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description='Accept AWS parameters')
 parser.add_argument('--branch', type=str, help='GitHub branch containing templates', required=True)
 parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=False)
 parser.add_argument('--job', type=str, help='Name of GitHub Action job to run', required=True)
+parser.add_argument('--config_file', type=str, help='Path to the config file in your GitHub repo', required=True)
 args = vars(parser.parse_args())
 
 def lint_templates(pipeline_object):
@@ -52,7 +53,7 @@ def deploy(configuration, pipeline_object, account_number):
 def prepare_to_deploy(job):
     logger.info("Preparing to {} templates...".format(job))
     branch = args['branch']
-    config = Configuration(branch)
+    config = Configuration(branch, args['config_file'])
     environment = config.environment
     if job == 'setup':
         pipeline = None
