@@ -90,6 +90,7 @@ jobs:
           echo "${{ needs.Get_Config_Settings.outputs.environment }}"
           echo "${{ needs.Get_Config_Settings.outputs.assumed_role_name }}"
           echo "${{ inputs.config_file_path }}"
+          echo "${{ env.SECRET_NAME }}"
           echo "Secret value should be below and hopefully redacted"
           echo "${{ secrets[env.SECRET_NAME] }}"
   # Lint_Templates:
