@@ -53,6 +53,14 @@ inputs:
     description: Main AWS region used to assume IAM role
     required: false
     default: 'us-east-1'
+  rules_repo:
+    description: GitHub repo containing your policy as code rules
+    required: false
+    default: ''
+  rules_folder_path:
+    description: Path to the folder containing your policy as code rules
+    required: false
+    default: ''
 
 outputs:
   branch_type:
@@ -88,6 +96,13 @@ runs:
       with:
         repository: tsamuel33/cloudformation-deployment-action
         path: action
+        token: ${{ github.token }}
+    - name: Checkout Rules Repo
+      if: inputs.rules_repo != '' && inputs.job_type == 'validate'
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.rules_repo }}
+        path: rules
         token: ${{ github.token }}
     - name: Get Branch Type
       if: inputs.branch_type == '' || inputs.job_type == 'setup'
@@ -174,7 +189,7 @@ runs:
       if: inputs.policy_as_code_provider != 'None' && inputs.job_type == 'validate'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
 
 # jobs:
 #   SetConfigVariables:

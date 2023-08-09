@@ -37,7 +37,6 @@ class AWSCloudFormationStack:
         ARN of the IAM role used to execute the CloudFormation actions
     """
 
-    deployment_dir = Path(__file__).parents[2] / "deployments"
     default_stack_prefix = "managed-app"
     changeset_prefix="github-actions-change-set"
     success_statuses = [

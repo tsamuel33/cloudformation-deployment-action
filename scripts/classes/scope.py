@@ -17,10 +17,10 @@ logger = logging.getLogger(Path(__file__).name)
 class PipelineScope:
 
     root_dir = Path(__file__).parents[3] / "main"
+    rules_root = Path(__file__).parents[3] / "rules"
     __repo = Repo(root_dir)
     __remote = __repo.remote()
     __head_commit = __repo.head.commit
-    cfn_guard_dir = root_dir / "rules" / "cfn-guard"
     tag_prefix = "cf-deployment"
     valid_template_suffixes = [
         ".yaml",
@@ -65,14 +65,9 @@ class PipelineScope:
         "error",
         "-r"
     ]
-    guard_commands = [
-        "cfn-guard",
-        "validate",
-        "-r",
-        cfn_guard_dir.as_posix()
-    ]
 
-    def __init__(self, branch, environment, deployment_path) -> None:
+
+    def __init__(self, branch, environment, deployment_path, rules_path) -> None:
         self.deployment_dir = self.root_dir / deployment_path
         self.create_list = []
         self.update_list = []
@@ -83,6 +78,13 @@ class PipelineScope:
         self.__last_deploy = self.get_last_deployment_commit(self.deploy_tag)
         self.__diff = self.get_diff()
         self.set_scope()
+        self.cfn_guard_dir = self.rules_root / rules_path
+        self.guard_commands = [
+            "cfn-guard",
+            "validate",
+            "-r",
+            self.cfn_guard_dir.as_posix()
+        ]
 
 
     def get_regions(self):

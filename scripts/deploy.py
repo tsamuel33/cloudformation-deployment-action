@@ -16,6 +16,7 @@ parser.add_argument('--account_number', type=str, help='AWS account in which tem
 parser.add_argument('--job', type=str, help='Name of GitHub Action job to run', required=True)
 parser.add_argument('--config_file', type=str, help='Path to the config file in your GitHub repo', required=True)
 parser.add_argument('--deployment_folder', type=str, help='Path to the folder containing deployment artifacts', required=True)
+parser.add_argument('--rules_folder', type=str, help='Path to the folder policy as code rules', default='', required=False)
 args = vars(parser.parse_args())
 
 def lint_templates(pipeline_object):
@@ -62,7 +63,7 @@ def prepare_to_deploy(job):
     if job == 'setup':
         pipeline = None
     else:
-        pipeline = PipelineScope(branch, environment, args['deployment_folder'])
+        pipeline = PipelineScope(branch, environment, args['deployment_folder'], args['rules_folder'])
     return (config, pipeline)
 
 def main(job):
