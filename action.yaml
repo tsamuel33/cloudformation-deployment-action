@@ -16,21 +16,27 @@ inputs:
       The type of branch being assessed. Valid values are 'major' (deployment branch)
       or 'minor' (feature branch)
     required: false
+    default: ''
   github_secret_type:
     description: The type of secret containing the AWS account number (repository, environment, or organization)
     required: false
+    default: ''
   policy_as_code_provider:
     description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
     required: false
+    default: ''
   account_secret_name:
     description: Name of the GitHub secret containing the AWS account number
     required: false
+    default: ''
   environment:
     description: Application environment associated with the target branch
     required: false
+    default: ''
   assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     required: false
+    default: ''
   config-path:
     description: Path to the config file from the root of your GitHub repository
     required: false
