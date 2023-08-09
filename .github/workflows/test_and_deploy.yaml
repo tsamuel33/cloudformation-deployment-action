@@ -100,22 +100,6 @@ jobs:
           account_secret_name: ${{ steps.config.outputs.account_secret_name }}
           environment: ${{ steps.config.outputs.environment }}
           assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
-  Check_Outputs:
-    runs-on: ubuntu-latest
-    if: inputs.job_type == 'validate'
-    steps:
-      - name: Checkout Output Values From Minor Branch
-        shell: bash
-        run: |
-          echo "${{ inputs.branch_type }}"
-          echo "${{ inputs.github_secret_type }}"
-          echo "${{ inputs.policy_as_code_provider }}"
-          echo "${{ inputs.account_secret_name }}"
-          echo "${{ inputs.environment }}"
-          echo "${{ inputs.assumed_role_name }}"
-          echo "${{ inputs.config_file_path }}"
-          echo "Secret value should be below and hopefully redacted"
-          echo "${{ secrets.ACCOUNT_NUMBER }}"
   Lint_Templates:
     runs-on: ubuntu-latest
     if: inputs.job_type == 'lint'
