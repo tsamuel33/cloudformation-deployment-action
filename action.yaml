@@ -119,6 +119,10 @@ runs:
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config-path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Echo Input Value for testing
+      id: testing
+      shell: bash
+      run: echo ${{ inputs.branch_type }}
     - name: Install Linting Dependencies
       if: inputs.job_type == 'lint'
       shell: bash
