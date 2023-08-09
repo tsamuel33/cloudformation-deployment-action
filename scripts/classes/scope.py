@@ -20,7 +20,6 @@ class PipelineScope:
     __repo = Repo(root_dir)
     __remote = __repo.remote()
     __head_commit = __repo.head.commit
-    deployment_dir = root_dir / "deployments"
     cfn_guard_dir = root_dir / "rules" / "cfn-guard"
     tag_prefix = "cf-deployment"
     valid_template_suffixes = [
@@ -73,7 +72,8 @@ class PipelineScope:
         cfn_guard_dir.as_posix()
     ]
 
-    def __init__(self, branch, environment) -> None:
+    def __init__(self, branch, environment, deployment_path) -> None:
+        self.deployment_dir = self.root_dir / deployment_path
         self.create_list = []
         self.update_list = []
         self.delete_list = []
