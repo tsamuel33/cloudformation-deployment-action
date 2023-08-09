@@ -61,7 +61,7 @@ jobs:
           branch_type: ${{ steps.config.outputs.branch_type }}
           github_secret_type: ${{ steps.config.outputs.github_secret_type }}
           policy_as_code_provider: ${{ steps.config.outputs.policy_as_code_provider }}
-          account_secret_name: ${{ steps.config.outputs.account_number_secret_name }}
+          account_secret_name: ${{ steps.config.outputs.account_secret_name }}
           environment: ${{ steps.config.outputs.environment }}
           assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
   Lint:
