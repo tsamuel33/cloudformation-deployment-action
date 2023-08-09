@@ -77,6 +77,8 @@ jobs:
   Check_Outputs:
     runs-on: ubuntu-latest
     needs: Get_Config_Settings
+    secrets:
+      account_number: ${{ secrets[env.SECRET_NAME] }}
     env:
       SECRET_NAME: "${{ needs.Get_Config_Settings.outputs.account_secret_name }}"
     steps:
@@ -91,7 +93,7 @@ jobs:
           echo "${{ needs.Get_Config_Settings.outputs.assumed_role_name }}"
           echo "${{ inputs.config_file_path }}"
           echo "Secret value should be below and hopefully redacted"
-          echo "${{ secrets.DEV_AWS_ACCOUNT_NUMBER }}"
+          echo "${{ secrets.account_number }}"
   # Lint_Templates:
   #   runs-on: ubuntu-latest
   #   needs: Get_Config_Settings
