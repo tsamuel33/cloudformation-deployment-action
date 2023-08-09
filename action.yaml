@@ -137,8 +137,8 @@ runs:
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Install Linting Dependencies
-      if: inputs.job_type == 'lint'
+    - name: Install Linting/Validation Dependencies
+      if: inputs.job_type != 'setup'
       shell: bash
       run: |
         echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
