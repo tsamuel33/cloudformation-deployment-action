@@ -56,6 +56,23 @@ on:
       account_secret_name:
         description: Name of the GitHub secret containing the AWS account number
         value: ${{ jobs.Get_Config_Settings.outputs.account_secret_name }}
+      branch_type:
+        description: >-
+          The type of branch being assessed. Valid values are 'major' (deployment branch)
+          or 'minor' (feature branch)
+        value: ${{ jobs.Get_Config_Settings.outputs.branch_type }}
+      github_secret_type:
+        description: The type of secret containing the AWS account number (repository, environment, or organization)
+        value: ${{ jobs.Get_Config_Settings.outputs.github_secret_type }}
+      policy_as_code_provider:
+        description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+        value: ${{ jobs.Get_Config_Settings.outputs.policy_as_code_provider }}
+      environment:
+        description: Application environment associated with the target branch
+        value: ${{ jobs.Get_Config_Settings.outputs.environment }}
+      assumed_role_name:
+        description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+        value: ${{ jobs.Get_Config_Settings.outputs.assumed_role_name }}
     secrets:
       ACCOUNT_NUMBER:
         description: ID number of the target AWS account
@@ -85,23 +102,22 @@ jobs:
           assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
   Check_Outputs:
     runs-on: ubuntu-latest
-    needs: Get_Config_Settings
     if: inputs.job_type == 'validate'
     env:
-      SECRET_NAME: "${{ needs.Get_Config_Settings.outputs.account_secret_name }}"
+      SECRET_NAME: ${{ inputs.account_secret_name }}
     steps:
       - name: Checkout Output Values From Minor Branch
         shell: bash
         run: |
-          echo "${{ needs.Get_Config_Settings.outputs.branch_type }}"
-          echo "${{ needs.Get_Config_Settings.outputs.github_secret_type }}"
-          echo "${{ needs.Get_Config_Settings.outputs.policy_as_code_provider }}"
-          echo "${{ needs.Get_Config_Settings.outputs.account_secret_name }}"
-          echo "${{ needs.Get_Config_Settings.outputs.environment }}"
-          echo "${{ needs.Get_Config_Settings.outputs.assumed_role_name }}"
+          echo "${{ inputs.branch_type }}"
+          echo "${{ inputs.github_secret_type }}"
+          echo "${{ inputs.policy_as_code_provider }}"
+          echo "${{ inputs.account_secret_name }}"
+          echo "${{ inputs.environment }}"
+          echo "${{ inputs.assumed_role_name }}"
           echo "${{ inputs.config_file_path }}"
           echo "Secret value should be below and hopefully redacted"
-          echo "${{ secrets.ACCOUNT_NUMBER }}"
+          echo "${{ secrets[env.SECRET_NAME] }}"
   # Lint_Templates:
   #   runs-on: ubuntu-latest
   #   needs: Get_Config_Settings
