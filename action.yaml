@@ -63,15 +63,17 @@ runs:
   steps:
     - name: Checkout Template Repo
       uses: actions/checkout@v3
+      with:
+        path: main
     - name: Checkout Action Repo
       uses: actions/checkout@v3
       with:
         repository: tsamuel33/cloudformation-deployment-action
-        path: $HOME/work/cloudformation-deployment-action
+        path: action
         token: ${{ github.token }}
     - name: Get Branch Type
       if: inputs.branch_type == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: branch_type
       shell: bash
       run: |
@@ -79,7 +81,7 @@ runs:
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: environment
       shell: bash
       run: |
@@ -87,7 +89,7 @@ runs:
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
       if: inputs.secret_type == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: secret_type
       shell: bash
       run: |
@@ -95,7 +97,7 @@ runs:
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
       if: inputs.validation_type == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: validation_type
       shell: bash
       run: |
@@ -103,7 +105,7 @@ runs:
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
       if: inputs.secret_name == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: secret_name
       shell: bash
       run: |
@@ -111,7 +113,7 @@ runs:
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
       if: inputs.assumed_role_name == null || inputs.job_type == 'setup'
-      working-directory: $HOME/work/cloudformation-deployment-action
+      working-directory: action
       id: assumed_role_name
       shell: bash
       run: |
@@ -125,7 +127,7 @@ runs:
     #     pip install cfn-lint GitPython jsonpath-ng --quiet
     # - name: Lint Templates
     #   if: inputs.job_type == 'lint'
-    #   working-directory: $HOME/work/cloudformation-deployment-action
+    #   working-directory: action
     #   shell: bash
     #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
 
