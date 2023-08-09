@@ -52,6 +52,16 @@ on:
         required: false
         default: 'us-east-1'
         type: string
+      rules_repo:
+        description: GitHub repo containing your policy as code rules
+        required: false
+        default: ''
+        type: string
+      rules_folder_path:
+        description: Path to the folder containing your policy as code rules
+        required: false
+        default: ''
+        type: string
     outputs:
       account_secret_name:
         description: Name of the GitHub secret containing the AWS account number
@@ -135,6 +145,8 @@ jobs:
           deployment_folder_path: ${{ inputs.deployment_folder_path }}
           config_file_path: ${{ inputs.config_file_path }}
           aws_account_number: ${{ secrets.ACCOUNT_NUMBER }}
+          rules_repo: ${{ inputs.rules_repo }}
+          rules_folder_path: ${{ inputs.rules_folder_path }}
   # Deploy:
   #   runs-on: ubuntu-latest
   #   needs: Get_Config_Settings
