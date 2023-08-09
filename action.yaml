@@ -29,6 +29,10 @@ inputs:
     description: Name of the GitHub secret containing the AWS account number
     required: false
     default: ''
+  aws_account_number:
+    description: ID number of the target AWS account
+    required: false
+    default: ''
   environment:
     description: Application environment associated with the target branch
     required: false
@@ -37,7 +41,7 @@ inputs:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     required: false
     default: ''
-  config_path:
+  config_file_path:
     description: Path to the config file from the root of your GitHub repository
     required: false
     default: 'config'
@@ -91,7 +95,7 @@ runs:
       id: branch_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == '' || inputs.job_type == 'setup'
@@ -99,7 +103,7 @@ runs:
       id: environment
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config_file_path }})
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
       if: inputs.github_secret_type == '' || inputs.job_type == 'setup'
@@ -107,7 +111,7 @@ runs:
       id: secret_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
       if: inputs.policy_as_code_provider == '' || inputs.job_type == 'setup'
@@ -115,7 +119,7 @@ runs:
       id: validation_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
       if: inputs.account_secret_name == '' || inputs.job_type == 'setup'
@@ -123,7 +127,7 @@ runs:
       id: secret_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
       if: inputs.assumed_role_name == '' || inputs.job_type == 'setup'
@@ -131,7 +135,7 @@ runs:
       id: assumed_role_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Install Linting Dependencies
       if: inputs.job_type == 'lint'
@@ -143,7 +147,7 @@ runs:
       if: inputs.job_type == 'lint'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config_file_path }}
     - name: Install cfn-guard
       if: inputs.job_type == 'validate' && inputs.policy_as_code_provider == 'guard'
       shell: bash
@@ -161,20 +165,17 @@ runs:
       if: inputs.policy_as_code_provider != 'None' && inputs.branch_type == 'major'
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ secrets[env.SECRET_NAME] }}:role/${{ env.ASSUMED_ROLE_NAME }}
+        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ env.ASSUMED_ROLE_NAME }}
         role-session-name: GADeployPipeline
         aws-region: ${{ env.AWS_REGION }}
       env:
         AWS_REGION : ${{ inputs.aws_region }}
-        SECRET_NAME: ${{ inputs.account_secret_name }}
         ASSUMED_ROLE_NAME: ${{ inputs.assumed_role_name }}
     - name: Policy as Code Validation
       if: inputs.policy_as_code_provider != 'None'
       working-directory: action
       shell: bash
-      env:
-        SECRET_NAME: ${{ inputs.account_secret_name }}
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && secrets[env.SECRET_NAME] || '123456789012' }} --job validate --deployment_folder ${{ inputs.deployment_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate --deployment_folder ${{ inputs.deployment_folder_path }}
 
 # jobs:
 #   SetConfigVariables:
@@ -199,7 +200,7 @@ runs:
       #   if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None' && needs.SetConfigVariables.outputs.branch_type == 'major'
       #   uses: aws-actions/configure-aws-credentials@v1-node16
       #   with:
-      #     role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ secrets[env.SECRET_NAME] }}:role/${{ env.ASSUMED_ROLE_NAME }}
+      #     role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ env.ASSUMED_ROLE_NAME }}
       #     role-session-name: GASession
       #     aws-region: ${{ env.AWS_REGION }}
       #   env:
@@ -208,7 +209,7 @@ runs:
       #     ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
       # - name: Policy as Code Validation
       #   if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None'
-      #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && secrets[env.SECRET_NAME] || '123456789012' }} --job validate
+      #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate
 #   Deploy:
 #     runs-on: ubuntu-latest
 #     needs: [SetConfigVariables, Test]
@@ -224,7 +225,7 @@ runs:
 #       - name: Configure AWS credentials
 #         uses: aws-actions/configure-aws-credentials@v1-node16
 #         with:
-#           role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ secrets[env.SECRET_NAME] }}:role/${{ env.ASSUMED_ROLE_NAME }}
+#           role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ env.ASSUMED_ROLE_NAME }}
 #           role-session-name: GASession
 #           aws-region: ${{ env.AWS_REGION }}
 #         env:
@@ -235,7 +236,7 @@ runs:
 #         env:
 #           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
 #         run: |
-#           RESULT=$(python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ secrets[env.SECRET_NAME] }} --job deploy --deployment_folder ${{ inputs.deployment_folder_path }})
+#           RESULT=$(python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.aws_account_number }} --job deploy --deployment_folder ${{ inputs.deployment_folder_path }})
 #           if [ $RESULT -ne 0 ]; then
 #             echo "ERROR: See logs for details."
 #             exit $RESULT
