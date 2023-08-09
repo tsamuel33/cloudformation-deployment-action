@@ -147,7 +147,7 @@ runs:
       if: inputs.job_type == 'lint'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config_file_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
     - name: Install cfn-guard
       if: inputs.job_type == 'validate' && inputs.policy_as_code_provider == 'guard'
       shell: bash
