@@ -56,10 +56,10 @@ on:
       account_secret_name:
         description: Name of the GitHub secret containing the AWS account number
         value: ${{ jobs.Get_Config_Settings.outputs.account_secret_name }}
-    # secrets:
-    #   ACCOUNT_NUMBER:
-    #     description: ID number of the target AWS account
-    #     required: false
+    secrets:
+      ACCOUNT_NUMBER:
+        description: ID number of the target AWS account
+        required: false
 
 permissions:
   id-token: write
