@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: Get Config Settings
         id: config
-        uses: ./.github/actions/cf-action
+        uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
           job_type: setup
           aws-partition: 'aws'
@@ -70,7 +70,7 @@ jobs:
     if: inputs.job_type == 'lint'
     steps:
       - name: Lint
-        uses: ./.github/actions/cf-action
+        uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
           job_type: lint
           aws-partition: 'aws'
