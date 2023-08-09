@@ -7,12 +7,10 @@ logger = logging.getLogger(Path(__file__).name)
 
 class Mappings:
 
-    root_dir = Path(__file__).parents[2]
-    deployment_dir = root_dir / "deployments"
-
     def __init__(
             self, mapping_type, region, environment,
-            all_environments) -> None:
+            all_environments, deployment_dir) -> None:
+        self.deployment_dir = deployment_dir
         if all_environments:
             mapping_dir = self.deployment_dir/region/"all_envs"/"mappings"
             mapping_file_name = ".".join((mapping_type, environment, "json"))

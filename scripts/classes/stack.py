@@ -58,8 +58,9 @@ class AWSCloudFormationStack:
     ]
 
     def __init__(self, template_file_path, environment, account_number,
-                 execution_role_name, check_period=15, stack_prefix=None,
+                 execution_role_name, deployment_dir, check_period=15, stack_prefix=None,
                  protection=False, upload_bucket_name=None) -> None:
+        self.deployment_dir = deployment_dir
         self._initial_time = datetime.now(timezone.utc)
         self._check_period = int(check_period)
         parts = template_file_path.parts
@@ -99,7 +100,7 @@ class AWSCloudFormationStack:
         logger = logging.getLogger(logger_name)
 
     def get_mapping_file(self, map_type, region, environment, all_envs):
-        mapping = Mappings(map_type, region, environment, all_envs)
+        mapping = Mappings(map_type, region, environment, all_envs, self.deployment_dir)
         return mapping
 
     def determine_stack_name(self, prefix):

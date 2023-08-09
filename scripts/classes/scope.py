@@ -248,7 +248,6 @@ class PipelineScope:
                     self.create_list.append(template_file_path)
                 elif change_type in ["M", "R"] and template_file_path not in self.update_list:
                     self.update_list.append(template_file_path)
-            
 
     def get_template_for_param_mapping(self, param_file_path):
         template_path = None
@@ -260,7 +259,7 @@ class PipelineScope:
             all_envs = True
         else:
             all_envs = False
-        param_mapping = Mappings("parameters", region, self.environment, all_envs)
+        param_mapping = Mappings("parameters", region, self.environment, all_envs, self.deployment_dir)
         if param_mapping.mapping is not None:
             template_names = list(param_mapping.mapping.keys())
             for name in template_names:
@@ -363,7 +362,7 @@ class PipelineScope:
     def render_template_with_parameters(self, template_path, account_number, role_name,
                          check_period, stack_prefix, protection, upload_bucket_name):
         stack = AWSCloudFormationStack(template_path, self.environment,
-                        account_number, role_name, check_period,
+                        account_number, role_name, self.deployment_dir, check_period,
                         stack_prefix, protection, upload_bucket_name)
         rendered_template = resolve_template(stack)
         return rendered_template
@@ -414,7 +413,7 @@ class PipelineScope:
         success_count = 0
         for template in template_list:
             stack = AWSCloudFormationStack(template, self.environment,
-                        account_number, role_name, check_period,
+                        account_number, role_name, self.deployment_dir, check_period,
                         stack_prefix, protection, upload_bucket_name)
             outcome = stack.run_stack_actions(action)
             if outcome == "SUCCESS":
