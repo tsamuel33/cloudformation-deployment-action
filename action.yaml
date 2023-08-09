@@ -119,17 +119,17 @@ runs:
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config-path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    # - name: Install Linting Dependencies
-    #   if: inputs.job_type == 'lint'
-    #   shell: bash
-    #   run: |
-    #     echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
-    #     pip install cfn-lint GitPython jsonpath-ng --quiet
-    # - name: Lint Templates
-    #   if: inputs.job_type == 'lint'
-    #   working-directory: action
-    #   shell: bash
-    #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
+    - name: Install Linting Dependencies
+      if: inputs.job_type == 'lint'
+      shell: bash
+      run: |
+        echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
+        pip install cfn-lint GitPython jsonpath-ng --quiet
+    - name: Lint Templates
+      if: inputs.job_type == 'lint'
+      working-directory: action
+      shell: bash
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint
 
 # jobs:
 #   SetConfigVariables:

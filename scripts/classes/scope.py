@@ -16,7 +16,7 @@ logger = logging.getLogger(Path(__file__).name)
 
 class PipelineScope:
 
-    root_dir = Path(__file__).parents[2]
+    root_dir = Path(__file__).parents[3] / "main"
     __repo = Repo(root_dir)
     __remote = __repo.remote()
     __head_commit = __repo.head.commit
