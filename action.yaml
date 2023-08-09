@@ -61,10 +61,17 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Checkout
+    - name: Checkout Template Repo
       uses: actions/checkout@v3
+    - name: Checkout Action Repo
+      uses: actions/checkout@v3
+      with:
+        repository: tsamuel33/cloudformation-deployment-action
+        path: cloudformation-deployment-action
+        token: ${{ github.token }}
     - name: Get Branch Type
       if: inputs.branch_type == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: branch_type
       shell: bash
       run: |
@@ -74,6 +81,7 @@ runs:
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
       if: inputs.environment == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: environment
       shell: bash
       run: |
@@ -81,6 +89,7 @@ runs:
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
       if: inputs.secret_type == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: secret_type
       shell: bash
       run: |
@@ -88,6 +97,7 @@ runs:
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
       if: inputs.validation_type == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: validation_type
       shell: bash
       run: |
@@ -95,6 +105,7 @@ runs:
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
       if: inputs.secret_name == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: secret_name
       shell: bash
       run: |
@@ -102,6 +113,7 @@ runs:
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
       if: inputs.assumed_role_name == null || inputs.job_type == 'setup'
+      working-directory: cloudformation-deployment-action
       id: assumed_role_name
       shell: bash
       run: |
