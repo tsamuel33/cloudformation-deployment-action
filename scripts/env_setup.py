@@ -10,14 +10,15 @@ logger = logging.getLogger(Path(__file__).name)
 # # Arguments
 parser = argparse.ArgumentParser(description='Accept AWS parameters')
 parser.add_argument('--branch', type=str, help='GitHub branch containing templates', required=True)
-parser.add_argument('--github_env_var', type=str, help='Name of the variable to be set in the GitHub environment', required=False)
-parser.add_argument('--repo', type=str, help='Name of the GitHub repo that hosts the CloudFormation templates', required=False)
-parser.add_argument('--config_file', type=str, help='Path to the config file in your GitHub repo', required=False)
+parser.add_argument('--github_env_var', type=str, help='Name of the variable to be set in the GitHub environment', required=True)
+parser.add_argument('--repo', type=str, help='Name of the GitHub repo that hosts the CloudFormation templates', required=True)
+parser.add_argument('--config_file', type=str, help='Path to the config file in your GitHub repo', required=True)
 args = vars(parser.parse_args())
 
 
-def main(branch, var, repo_name, config_path):
+def main(branch, var, repo, config_path):
     logger.info("Setting environment variable: {}...".format(var))
+    repo_name = repo.split("/")[1]
     config = Configuration(branch, repo_name, config_path)
     branch_type = config.branch_type
     if var == "branch_type":
