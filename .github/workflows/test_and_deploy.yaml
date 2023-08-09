@@ -77,6 +77,8 @@ jobs:
   Check_Outputs:
     runs-on: ubuntu-latest
     needs: Get_Config_Settings
+    env:
+      SECRET_NAME: "${{ needs.Get_Config_Settings.outputs.account_secret_name }}"
     steps:
       - name: Checkout Output Values From Minor Branch
         shell: bash
@@ -89,7 +91,7 @@ jobs:
           echo "${{ needs.Get_Config_Settings.outputs.assumed_role_name }}"
           echo "${{ inputs.config_file_path }}"
           echo "Secret value should be below and hopefully redacted"
-          echo "${{ secrets[needs.Get_Config_Settings.outputs.account_secret_name] }}"
+          echo "${{ secrets[env.SECRET_NAME] }}"
   # Lint_Templates:
   #   runs-on: ubuntu-latest
   #   needs: Get_Config_Settings
