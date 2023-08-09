@@ -72,7 +72,7 @@ runs:
         path: action
         token: ${{ github.token }}
     - name: Get Branch Type
-      if: inputs.branch_type == null || inputs.job_type == 'setup'
+      if: inputs.branch_type == '' || inputs.job_type == 'setup'
       working-directory: action
       id: branch_type
       shell: bash
@@ -80,7 +80,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config-path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
-      if: inputs.environment == null || inputs.job_type == 'setup'
+      if: inputs.environment == '' || inputs.job_type == 'setup'
       working-directory: action
       id: environment
       shell: bash
@@ -88,7 +88,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config-path }})
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
-      if: inputs.secret_type == null || inputs.job_type == 'setup'
+      if: inputs.secret_type == '' || inputs.job_type == 'setup'
       working-directory: action
       id: secret_type
       shell: bash
@@ -96,7 +96,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config-path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
-      if: inputs.validation_type == null || inputs.job_type == 'setup'
+      if: inputs.validation_type == '' || inputs.job_type == 'setup'
       working-directory: action
       id: validation_type
       shell: bash
@@ -104,7 +104,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config-path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
-      if: inputs.secret_name == null || inputs.job_type == 'setup'
+      if: inputs.secret_name == '' || inputs.job_type == 'setup'
       working-directory: action
       id: secret_name
       shell: bash
@@ -112,7 +112,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config-path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
-      if: inputs.assumed_role_name == null || inputs.job_type == 'setup'
+      if: inputs.assumed_role_name == '' || inputs.job_type == 'setup'
       working-directory: action
       id: assumed_role_name
       shell: bash
