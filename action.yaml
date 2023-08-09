@@ -94,7 +94,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config-path }})
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
-      if: inputs.secret_type == '' || inputs.job_type == 'setup'
+      if: inputs.github_secret_type == '' || inputs.job_type == 'setup'
       working-directory: action
       id: secret_type
       shell: bash
@@ -102,7 +102,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config-path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
-      if: inputs.validation_type == '' || inputs.job_type == 'setup'
+      if: inputs.policy_as_code_provider == '' || inputs.job_type == 'setup'
       working-directory: action
       id: validation_type
       shell: bash
@@ -110,7 +110,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config-path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
-      if: inputs.secret_name == '' || inputs.job_type == 'setup'
+      if: inputs.account_secret_name == '' || inputs.job_type == 'setup'
       working-directory: action
       id: secret_name
       shell: bash
@@ -125,10 +125,6 @@ runs:
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config-path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Echo Input Value for testing
-      id: testing
-      shell: bash
-      run: echo ${{ inputs.branch_type }}
     - name: Install Linting Dependencies
       if: inputs.job_type == 'lint'
       shell: bash

@@ -63,7 +63,7 @@ jobs:
           policy_as_code_provider: ${{ steps.config.outputs.policy_as_code_provider }}
           account_secret_name: ${{ steps.config.outputs.account_number_secret_name }}
           environment: ${{ steps.config.outputs.environment }}
-          assumed_role_name: ${{ steps.config.outputs.github_assumed_role_name }}
+          assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
   Lint:
     runs-on: ubuntu-latest
     needs: Setup
