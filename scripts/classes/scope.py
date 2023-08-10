@@ -127,18 +127,17 @@ class PipelineScope:
             else:
                 raise err
         # If tag not found locally, check against the remote repo
-        #TODO - uncomment this after testing
-        # if retry:
-        #     try:
-        #         self.__repo.git.fetch("--tags", "--force")
-        #         commit = self.__repo.tag(target_tag).commit
-        #     except ValueError as err:
-        #         if err.args[0] == "Reference at " + \
-        #             "'refs/tags/{}' does not exist".format(target_tag):
-        #             message = "Tag '{}' does not exist. ".format(target_tag) + \
-        #                 "Pipeline will attempt to deploy all relevant " + \
-        #                 "CloudFormation stacks."
-        #             logger.warning(message)
+        if retry:
+            try:
+                self.__repo.git.fetch("--tags", "--force")
+                commit = self.__repo.tag(target_tag).commit
+            except ValueError as err:
+                if err.args[0] == "Reference at " + \
+                    "'refs/tags/{}' does not exist".format(target_tag):
+                    message = "Tag '{}' does not exist. ".format(target_tag) + \
+                        "Pipeline will attempt to deploy all relevant " + \
+                        "CloudFormation stacks."
+                    logger.warning(message)
         return commit
 
     def create_new_tag(self, target_tag, commit):
