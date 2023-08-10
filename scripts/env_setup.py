@@ -24,7 +24,7 @@ def main(branch, var, config_path):
     else:
         value = config.get_config_value(var)
     # Must use 'print' rather than 'return' to output value to GitHub Actions
-    return value
+    print(value)
 
 if __name__ == "__main__":
     main(args['branch'], args['github_env_var'], args['config_file'])
