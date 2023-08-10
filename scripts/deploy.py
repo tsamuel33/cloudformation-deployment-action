@@ -78,16 +78,15 @@ def main(job):
                     " deployment. No actions taken."
         logger.info(message)
         exit_code = 0
-    elif job == 'lint':
-        lint_exit_code = lint_templates(pipeline)
-        exit_code = lint_exit_code
-    elif job == 'validate':
-        validation_exit_code = validate_templates(config, pipeline, args['account_number'])
-        exit_code = validation_exit_code
-    elif job == 'deploy':
-        deployment_exit_code = deploy(config, pipeline, args['account_number'])
-        exit_code = deployment_exit_code
-    # Return exit code to GitHub Actions by printing
+    elif job.lower() == 'lint':
+        exit_code = lint_templates(pipeline)
+    elif job.lower() == 'validate':
+        exit_code = validate_templates(config, pipeline, args['account_number'])
+    elif job.lower() == 'deploy':
+        exit_code = deploy(config, pipeline, args['account_number'])
+    else:
+        logger.info("Invalid job type. Exiting...")
+        exit_code = 1
     return exit_code
 
 if __name__ == "__main__":

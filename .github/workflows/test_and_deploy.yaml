@@ -95,13 +95,13 @@ permissions:
 jobs:
   Get_Config_Settings:
     runs-on: ubuntu-latest
-    if: inputs.job_type == 'setup'
+    if: inputs.job_type == 'Setup'
     steps:
       - name: Get Config Settings
         id: config
         uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
-          job_type: setup
+          job_type: Setup
           config_file_path: ${{ inputs.config_file_path }}
     outputs:
           branch_type: ${{ steps.config.outputs.branch_type }}
@@ -112,7 +112,7 @@ jobs:
           assumed_role_name: ${{ steps.config.outputs.assumed_role_name }}
   Perform_Template_Action:
     runs-on: ubuntu-latest
-    if: inputs.job_type != 'setup'
+    if: inputs.job_type != 'Setup'
     environment: ${{ inputs.github_secret_type == 'environment' && inputs.environment || null }}
     steps:
       - name: ${{ inputs.job_type }} Templates
@@ -134,12 +134,12 @@ jobs:
           aws_region: ${{ inputs.aws_region }}
   # Lint_Templates:
   #   runs-on: ubuntu-latest
-  #   if: inputs.job_type == 'lint'
+  #   if: inputs.job_type == 'Lint'
   #   steps:
   #     - name: Lint Templates
   #       uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
   #       with:
-  #         job_type: lint
+  #         job_type: Lint
   #         branch_type: ${{ inputs.branch_type }}
   #         github_secret_type: ${{ inputs.github_secret_type }}
   #         policy_as_code_provider: ${{ inputs.policy_as_code_provider }}
@@ -150,13 +150,13 @@ jobs:
   #         deployment_folder_path: ${{ inputs.deployment_folder_path }}
   # Policy_As_Code_Validation:
   #   runs-on: ubuntu-latest
-  #   if: inputs.job_type == 'validate'
+  #   if: inputs.job_type == 'Validate'
   #   environment: ${{ inputs.github_secret_type == 'environment' && inputs.environment || null }}
   #   steps:
   #     - name: Validate Templates
   #       uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
   #       with:
-  #         job_type: validate
+  #         job_type: Validate
   #         aws_partition: ${{ inputs.aws_partition }}
   #         branch_type: ${{ inputs.branch_type }}
   #         github_secret_type: ${{ inputs.github_secret_type }}
@@ -173,13 +173,13 @@ jobs:
   # Deploy:
   #   runs-on: ubuntu-latest
   #   needs: Get_Config_Settings
-  #   if: inputs.job_type == 'deploy'
+  #   if: inputs.job_type == 'Deploy'
   #   environment: ${{ inputs.github_secret_type == 'environment' && inputs.environment || null }}
   #   steps:
   #     - name: Deploy
   #       uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
   #       with:
-  #         job_type: deploy
+  #         job_type: Deploy
   #         aws_partition: ${{ inputs.aws_partition }}
   #         branch_type: ${{ inputs.branch_type }}
   #         github_secret_type: ${{ inputs.github_secret_type }}

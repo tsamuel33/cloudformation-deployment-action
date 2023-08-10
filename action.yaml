@@ -1,6 +1,6 @@
 name: CloudFormation Testing and Deployment
 description: >-
-  Action to lint, validate vs. policy as code (optional) and deploy
+  Action to Lint, Validate vs. policy as code (optional) and deploy
   CloudFormation templates
 
 inputs:
@@ -98,14 +98,14 @@ runs:
         path: action
         token: ${{ github.token }}
     - name: Checkout Rules Repo
-      if: inputs.rules_repo != '' && inputs.job_type == 'validate'
+      if: inputs.rules_repo != '' && inputs.job_type == 'Validate'
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.rules_repo }}
         path: rules
         token: ${{ github.token }}
     - name: Get Branch Type
-      if: inputs.branch_type == '' || inputs.job_type == 'setup'
+      if: inputs.branch_type == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: branch_type
       shell: bash
@@ -113,7 +113,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Environment
-      if: inputs.environment == '' || inputs.job_type == 'setup'
+      if: inputs.environment == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: environment
       shell: bash
@@ -121,7 +121,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var environment --config_file ${{ inputs.config_file_path }})
         echo "environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
-      if: inputs.github_secret_type == '' || inputs.job_type == 'setup'
+      if: inputs.github_secret_type == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: secret_type
       shell: bash
@@ -129,7 +129,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
-      if: inputs.policy_as_code_provider == '' || inputs.job_type == 'setup'
+      if: inputs.policy_as_code_provider == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: validation_type
       shell: bash
@@ -137,7 +137,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
-      if: inputs.account_secret_name == '' || inputs.job_type == 'setup'
+      if: inputs.account_secret_name == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: secret_name
       shell: bash
@@ -145,7 +145,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
-      if: inputs.assumed_role_name == '' || inputs.job_type == 'setup'
+      if: inputs.assumed_role_name == '' || inputs.job_type == 'Setup'
       working-directory: action
       id: assumed_role_name
       shell: bash
@@ -153,31 +153,31 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Install Linting/Validation Dependencies
-      if: inputs.job_type != 'setup'
+      if: inputs.job_type != 'Setup'
       shell: bash
       run: |
         echo "Installing cfn-lint, GitPython, and jsonpath-ng via pip..."
         pip install cfn-lint GitPython jsonpath-ng --quiet
     - name: Lint Templates
-      if: inputs.job_type == 'lint'
+      if: inputs.job_type == 'Lint'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job Lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
     - name: Install cfn-guard
-      if: inputs.job_type == 'validate' && inputs.policy_as_code_provider == 'guard'
+      if: inputs.job_type == 'Validate' && inputs.policy_as_code_provider == 'guard'
       shell: bash
       run: |
         curl --proto ''=https'' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
         GUARD_DIR=~/.guard/bin
         echo $GUARD_DIR >> $GITHUB_PATH
     - name: Install Open Policy Agent
-      if: inputs.job_type == 'validate' && inputs.policy_as_code_provider == 'opa'
+      if: inputs.job_type == 'Validate' && inputs.policy_as_code_provider == 'opa'
       shell: bash
       run: |
         curl -L -o opa https://openpolicyagent.org/downloads/v0.55.0/opa_linux_amd64_static
         chmod 755 ./opa
     # - name: Configure AWS credentials
-    #   if: (inputs.policy_as_code_provider != 'None' && inputs.job_type == 'validate') || inputs.branch_type == 'major'
+    #   if: (inputs.policy_as_code_provider != 'None' && inputs.job_type == 'Validate') || inputs.branch_type == 'major'
     #   uses: aws-actions/configure-aws-credentials@v1-node16
     #   with:
     #     role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.assumed_role_name }}
@@ -186,10 +186,10 @@ runs:
     #   env:
     #     AWS_REGION : ${{ inputs.aws_region }}
     - name: Policy as Code Validation
-      if: inputs.policy_as_code_provider != 'None' && inputs.job_type == 'validate'
+      if: inputs.policy_as_code_provider != 'None' && inputs.job_type == 'Validate'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
 
 # jobs:
 #   SetConfigVariables:
@@ -223,7 +223,7 @@ runs:
       #     ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
       # - name: Policy as Code Validation
       #   if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None'
-      #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job validate
+      #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate
 #   Deploy:
 #     runs-on: ubuntu-latest
 #     needs: [SetConfigVariables, Test]
