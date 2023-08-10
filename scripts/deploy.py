@@ -87,7 +87,7 @@ def main(job):
     else:
         logger.info("Invalid job type. Exiting...")
         exit_code = 1
-    return exit_code
+    exit(exit_code)
 
 if __name__ == "__main__":
     main(args['job'])
