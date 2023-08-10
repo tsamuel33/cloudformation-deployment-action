@@ -176,82 +176,27 @@ runs:
       run: |
         curl -L -o opa https://openpolicyagent.org/downloads/v0.55.0/opa_linux_amd64_static
         chmod 755 ./opa
-    # - name: Configure AWS credentials
-    #   if: (inputs.policy_as_code_provider != 'None' && inputs.job_type == 'Validate') || inputs.branch_type == 'major'
-    #   uses: aws-actions/configure-aws-credentials@v1-node16
-    #   with:
-    #     role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.assumed_role_name }}
-    #     role-session-name: GADeployPipeline
-    #     aws-region: ${{ env.AWS_REGION }}
-    #   env:
-    #     AWS_REGION : ${{ inputs.aws_region }}
+    - name: Configure AWS credentials
+      if: inputs.branch_type == 'major'
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.assumed_role_name }}
+        role-session-name: GADeployPipeline
+        aws-region: ${{ env.AWS_REGION }}
+      env:
+        AWS_REGION : ${{ inputs.aws_region }}
     - name: Policy as Code Validation
       if: inputs.policy_as_code_provider != 'None' && inputs.job_type == 'Validate'
       working-directory: action
       shell: bash
       run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
-
-# jobs:
-#   SetConfigVariables:
-#     runs-on: ubuntu-latest
-    
-#     outputs:
-#       branch_type: ${{ steps.branch_type.outputs.branch_type }}
-#       github_secret_type: ${{ steps.secret_type.outputs.github_secret_type }}
-#       policy_as_code_provider: ${{ steps.validation_type.outputs.policy_as_code_provider }}
-#       account_secret_name: ${{ steps.secret_name.outputs.account_number_secret_name }}
-#       environment: ${{ steps.environment.outputs.environment }}
-#       assumed_role_name: ${{ steps.assumed_role_name.outputs.github_assumed_role_name }}
-#   Test:
-#     runs-on: ubuntu-latest
-#     needs: SetConfigVariables
-#     environment: ${{ needs.SetConfigVariables.outputs.github_secret_type == 'environment' && needs.SetConfigVariables.outputs.environment || null }}
-#     env:
-#       SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
-#     steps:
-      
-      # - name: Configure AWS credentials
-      #   if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None' && needs.SetConfigVariables.outputs.branch_type == 'major'
-      #   uses: aws-actions/configure-aws-credentials@v1-node16
-      #   with:
-      #     role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ env.ASSUMED_ROLE_NAME }}
-      #     role-session-name: GASession
-      #     aws-region: ${{ env.AWS_REGION }}
-      #   env:
-      #     AWS_REGION : "us-east-1"
-      #     SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
-      #     ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
-      # - name: Policy as Code Validation
-      #   if: needs.SetConfigVariables.outputs.policy_as_code_provider != 'None'
-      #   run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ needs.SetConfigVariables.outputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate
-#   Deploy:
-#     runs-on: ubuntu-latest
-#     needs: [SetConfigVariables, Test]
-#     if: needs.SetConfigVariables.outputs.branch_type == 'major'
-#     environment: ${{ needs.SetConfigVariables.outputs.github_secret_type == 'environment' && needs.SetConfigVariables.outputs.environment || null }}
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v3
-#       - name: Install Deployment Dependencies
-#         run: |
-#           echo "Installing boto3, GitPython, and jsonpath-ng via pip..."
-#           pip install boto3 GitPython jsonpath-ng --quiet
-#       - name: Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v1-node16
-#         with:
-#           role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ env.ASSUMED_ROLE_NAME }}
-#           role-session-name: GASession
-#           aws-region: ${{ env.AWS_REGION }}
-#         env:
-#           AWS_REGION : "us-east-1"
-#           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
-#           ASSUMED_ROLE_NAME: ${{ needs.SetConfigVariables.outputs.assumed_role_name }}
-#       - name: Deploy Templates
-#         env:
-#           SECRET_NAME: ${{ needs.SetConfigVariables.outputs.account_secret_name }}
-#         run: |
-#           RESULT=$(python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.aws_account_number }} --job deploy --deployment_folder ${{ inputs.deployment_folder_path }})
-#           if [ $RESULT -ne 0 ]; then
-#             echo "ERROR: See logs for details."
-#             exit $RESULT
-#           fi
+    - name: Deploy Templates
+      if: inputs.branch_type == 'major' && inputs.job_type == 'Deploy'
+      working-directory: action
+      shell: bash
+      run: |
+        RESULT=$(python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.aws_account_number }} --job Deploy --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }})
+        if [ $RESULT -ne 0 ]; then
+          echo "ERROR: See logs for details."
+          exit $RESULT
+        fi
