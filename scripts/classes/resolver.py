@@ -9,6 +9,7 @@ import sys
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
+from jsonpath_ng.jsonpath import Fields
 from jsonpath_ng.ext import parse
 import yaml
 
@@ -331,6 +332,9 @@ def get_condition_value(data, input):
 def replace_condition(json_path, data, input):
     if isinstance(input, str):
         value = get_condition_value(data, input)
+        # Stop update from overwriting field if not in the Conditions section
+        if "Conditions" not in str(json_path):
+            json_path = json_path.child(Fields('Condition'))
         if type(value) is bool:
             json_path.update(data, value)
 
@@ -436,6 +440,7 @@ def replace_and(json_path, data, input):
 def replace_equals(json_path, data, input):
     proceed = False
     if isinstance(input, list) and len(input) == 2:
+        if not isinstance(input[0], (list,dict)) and not isinstance(input[1], (list,dict)):
             proceed = True
     if proceed:
         if str(input[0]) == str(input[1]):
@@ -572,12 +577,18 @@ def get_cf_exports(region):
     except NoCredentialsError as err:
         logger.info("Unable to get export values due to: No AWS Credentials Found")
         return None
-    
-def remove_resources_with_false_condition(data):
-    resource_parser = parse("$.Resources.*")
-    removal_targets = [str(match.full_path) for match in resource_parser.find(data) if (isinstance(match.value, bool) and match.value is False)]
-    for resource in removal_targets:
-        parse(resource).filter(lambda x: not x, data)
+
+def remove_resources_with_false_condition(data, section="Resources"):
+    parser_string = ".".join(("$", section, "*", "Condition"))
+    parser = parse(parser_string)
+    replace_line = [str(match.full_path) for match in parser.find(data) if (isinstance(match.value, bool) and match.value is True)]
+    replace_resource = [str(match.full_path) for match in parser.find(data) if (isinstance(match.value, bool) and match.value is False)]
+    for line in replace_line:
+        parse(line).filter(lambda x: x, data)
+    for resource in replace_resource:
+        resource_string = ".".join((resource, "`parent`"))
+        location = [str(match.full_path) for match in parse(resource_string).find(data)][0]
+        parse(location).filter(lambda x: not x['Condition'], data)
 
 def resolve_template(stack):
     account_number = stack.role_arn.split(":")[4]
@@ -600,7 +611,8 @@ def resolve_template(stack):
     # Process data multiple times to process previously unrendered data
     for x in range(0, 3):
         process_values(all_parser, json_data, parameters, region, partition, account_number, stack_name, az_list, cf_exports)
-    remove_resources_with_false_condition(json_data)
+    remove_resources_with_false_condition(json_data, "Resources")
+    remove_resources_with_false_condition(json_data, "Outputs")
     json_string = json.dumps(json_data, indent=2, default=str)
     rendered_template = create_test_file(stack_name, json_string)
     return rendered_template
