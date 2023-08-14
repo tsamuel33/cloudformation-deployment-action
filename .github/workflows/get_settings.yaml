@@ -1,0 +1,56 @@
+name: Get Settings From Config
+on:
+  workflow_call:
+    inputs:
+      config_file_path:
+        description: Path to the config file from the root of your GitHub repository
+        required: false
+        default: 'config'
+        type: string
+    outputs:
+      aws_account_number:
+        description: ID of target AWS account
+        value: ${{ jobs.Get_Config_Settings.outputs.aws_account_number }}
+      account_number_secret_name:
+        description: Name of the GitHub secret containing the AWS account number
+        value: ${{ jobs.Get_Config_Settings.outputs.account_number_secret_name }}
+      branch_type:
+        description: >-
+          The type of branch being assessed. Valid values are 'major' (deployment branch)
+          or 'minor' (feature branch)
+        value: ${{ jobs.Get_Config_Settings.outputs.branch_type }}
+      github_secret_type:
+        description: The type of secret containing the AWS account number (repository, environment, or organization)
+        value: ${{ jobs.Get_Config_Settings.outputs.github_secret_type }}
+      policy_as_code_provider:
+        description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+        value: ${{ jobs.Get_Config_Settings.outputs.policy_as_code_provider }}
+      github_environment:
+        description: Name of GitHub environment associated with the target branch
+        value: ${{ jobs.Get_Config_Settings.outputs.github_environment }}
+      github_assumed_role_name:
+        description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+        value: ${{ jobs.Get_Config_Settings.outputs.github_assumed_role_name }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Get_Config_Settings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Config Settings
+        id: config
+        uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
+        with:
+          job_type: Setup
+          config_file_path: ${{ inputs.config_file_path }}
+    outputs:
+          branch_type: ${{ steps.config.outputs.branch_type }}
+          github_secret_type: ${{ steps.config.outputs.github_secret_type }}
+          policy_as_code_provider: ${{ steps.config.outputs.policy_as_code_provider }}
+          account_number_secret_name: ${{ steps.config.outputs.account_number_secret_name }}
+          github_assumed_role_name: ${{ steps.config.outputs.github_assumed_role_name }}
+          aws_account_number: ${{ steps.config.outputs.aws_account_number }}
+          github_environment: ${{ steps.config.outputs.github_environment }}
