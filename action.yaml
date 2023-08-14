@@ -25,7 +25,7 @@ inputs:
     description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
     required: false
     default: ''
-  account_secret_name:
+  account_number_secret_name:
     description: Name of the GitHub secret containing the AWS account number
     required: false
     default: ''
@@ -37,7 +37,7 @@ inputs:
     description: Application environment associated with the target branch
     required: false
     default: ''
-  assumed_role_name:
+  github_assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     required: false
     default: ''
@@ -70,22 +70,22 @@ outputs:
     value: ${{ steps.branch_type.outputs.branch_type }}
   github_secret_type:
     description: The type of secret containing the AWS account number (repository, environment, or organization)
-    value: ${{ steps.secret_type.outputs.github_secret_type }}
+    value: ${{ steps.github_secret_type.outputs.github_secret_type }}
   policy_as_code_provider:
     description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
-    value: ${{ steps.validation_type.outputs.policy_as_code_provider }}
-  account_secret_name:
+    value: ${{ steps.policy_as_code_provider.outputs.policy_as_code_provider }}
+  account_number_secret_name:
     description: Name of the GitHub secret containing the AWS account number
-    value: ${{ steps.secret_name.outputs.account_number_secret_name }}
+    value: ${{ steps.account_number_secret_name.outputs.account_number_secret_name }}
   aws_account_number:
     description: ID of target AWS account
     value: ${{ steps.aws_account_number.outputs.aws_account_number }}
   github_environment:
     description: Name of GitHub environment associated with the target branch
     value: ${{ steps.github_environment.outputs.github_environment }}
-  assumed_role_name:
+  github_assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
-    value: ${{ steps.assumed_role_name.outputs.github_assumed_role_name }}
+    value: ${{ steps.github_assumed_role_name.outputs.github_assumed_role_name }}
 
 runs:
   using: composite
@@ -101,7 +101,7 @@ runs:
         path: action
         token: ${{ github.token }}
     - name: Checkout Rules Repo
-      if: inputs.rules_repo != '' && inputs.job_type == 'Validate'
+      if: inputs.rules_repo != '' && inputs.rules_folder_path != '' && inputs.job_type == 'Validate'
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.rules_repo }}
@@ -126,7 +126,7 @@ runs:
     - name: Get Secret Type
       if: inputs.github_secret_type == '' || inputs.job_type == 'Setup'
       working-directory: action
-      id: secret_type
+      id: github_secret_type
       shell: bash
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
@@ -134,7 +134,7 @@ runs:
     - name: Get Validation Type
       if: inputs.policy_as_code_provider == '' || inputs.job_type == 'Setup'
       working-directory: action
-      id: validation_type
+      id: policy_as_code_provider
       shell: bash
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
@@ -148,17 +148,17 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var aws_account_number --config_file ${{ inputs.config_file_path }})
         echo "aws_account_number=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
-      if: inputs.account_secret_name == '' || inputs.job_type == 'Setup'
+      if: inputs.account_number_secret_name == '' || inputs.job_type == 'Setup'
       working-directory: action
-      id: secret_name
+      id: account_number_secret_name
       shell: bash
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
-      if: inputs.assumed_role_name == '' || inputs.job_type == 'Setup'
+      if: inputs.github_assumed_role_name == '' || inputs.job_type == 'Setup'
       working-directory: action
-      id: assumed_role_name
+      id: github_assumed_role_name
       shell: bash
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
