@@ -33,8 +33,8 @@ inputs:
     description: ID number of the target AWS account
     required: false
     default: ''
-  environment:
-    description: Application environment associated with the target branch
+  github_environment:
+    description: Name of GitHub environment associated with the target branch
     required: false
     default: ''
   github_assumed_role_name:
@@ -116,7 +116,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get GitHub Environment
-      if: inputs.github_environment == '' || inputs.job_type == 'Setup'
+      if: inputs.job_type == 'Setup'
       working-directory: action
       id: github_environment
       shell: bash
@@ -124,7 +124,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_environment --config_file ${{ inputs.config_file_path }})
         echo "github_environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
-      if: inputs.github_secret_type == '' || inputs.job_type == 'Setup'
+      if: inputs.job_type == 'Setup'
       working-directory: action
       id: github_secret_type
       shell: bash
@@ -132,7 +132,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
-      if: inputs.policy_as_code_provider == '' || inputs.job_type == 'Setup'
+      if: inputs.job_type == 'Setup'
       working-directory: action
       id: policy_as_code_provider
       shell: bash
@@ -140,7 +140,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Account Number
-      if: inputs.aws_account_number == '' || inputs.job_type == 'Setup'
+      if: inputs.job_type == 'Setup'
       working-directory: action
       id: aws_account_number
       shell: bash
@@ -148,7 +148,7 @@ runs:
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var aws_account_number --config_file ${{ inputs.config_file_path }})
         echo "aws_account_number=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
-      if: inputs.account_number_secret_name == '' || inputs.job_type == 'Setup'
+      if: inputs.job_type == 'Setup'
       working-directory: action
       id: account_number_secret_name
       shell: bash
