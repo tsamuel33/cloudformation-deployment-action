@@ -63,16 +63,16 @@ class Configuration:
         config.read_file(open(self.config_file))
         return config
 
-    # TODO - If config value is wrapped in quotations, validation test fails. Ease this contraint
     def get_config_value(self, attribute, fallback=None):
         try:
             value = self.config[self.section].get(attribute, fallback)
             if value is not None:
+                value = value.strip('"').strip("'")
                 if value.lower() == 'true':
                     value = True
                 elif value.lower() == 'false':
                     value = False
-                return value
+            return value
         except KeyError:
             message = "Configuration is missing section: {}".format(self.section)
             logger.error(message)
