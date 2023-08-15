@@ -60,10 +60,7 @@ def prepare_to_deploy(job):
     branch = args['branch']
     config = Configuration(branch, args['config_file'])
     environment = config.environment
-    if job == 'setup':
-        pipeline = None
-    else:
-        pipeline = PipelineScope(branch, environment, args['deployment_folder'], args['rules_folder'])
+    pipeline = PipelineScope(branch, environment, args['deployment_folder'], args['rules_folder'])
     return (config, pipeline)
 
 def main(job):

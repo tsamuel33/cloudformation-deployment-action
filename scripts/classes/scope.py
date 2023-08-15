@@ -260,7 +260,11 @@ class PipelineScope:
             all_envs = False
         if all_envs and len(param_file_path.name.split(".")) == 3:
             if param_file_path.name.split(".")[1] != self.environment:
-                logger.info("Mapping file [{}] is not in scope for environment [{}] and will be ignored.".format(param_file_path.as_posix(),self.environment))
+                message = "Parameter file " + \
+                    "[{}] is not in ".format(param_file_path.as_posix()) + \
+                    "scope for environment " + \
+                    "[{}] and will be ignored.".format(self.environment)
+                logger.info(message)
                 return template_path
         param_mapping = Mappings("parameters", region, self.environment, all_envs, self.deployment_dir)
         if param_mapping.mapping is not None:
