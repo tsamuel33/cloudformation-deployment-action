@@ -68,7 +68,9 @@ class PipelineScope:
 
 
     def __init__(self, branch, environment, deployment_path, rules_path) -> None:
+        logger.info("Root Dir is: {}".format(self.root_dir.as_posix()))
         logger.info("Current directory is: {}".format(Path.cwd().as_posix()))
+        logger.info("Scope file location is: {}".format(Path(__file__).as_posix()))
         self.deployment_dir = self.root_dir / deployment_path
         self.create_list = []
         self.update_list = []
