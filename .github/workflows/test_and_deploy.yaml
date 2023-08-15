@@ -78,7 +78,7 @@ permissions:
 jobs:
   Perform_Template_Action:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.github_secret_type == 'environment' && inputs.github_environment || null }}
+    environment: ${{ inputs.github_environment != '' && inputs.github_environment || null }}
     steps:
       - name: ${{ inputs.job_type }} Templates
         uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
@@ -89,7 +89,7 @@ jobs:
           github_secret_type: ${{ inputs.github_secret_type }}
           policy_as_code_provider: ${{ inputs.policy_as_code_provider }}
           account_number_secret_name: ${{ inputs.account_number_secret_name }}
-          environment: ${{ inputs.environment }}
+          github_environment: ${{ inputs.github_environment }}
           github_assumed_role_name: ${{ inputs.github_assumed_role_name }}
           deployment_folder_path: ${{ inputs.deployment_folder_path }}
           config_file_path: ${{ inputs.config_file_path }}
