@@ -68,9 +68,6 @@ class PipelineScope:
 
 
     def __init__(self, branch, environment, deployment_path, rules_path) -> None:
-        logger.info("Root Dir is: {}".format(self.root_dir.as_posix()))
-        logger.info("Current directory is: {}".format(Path.cwd().as_posix()))
-        logger.info("Scope file location is: {}".format(Path(__file__).as_posix()))
         self.deployment_dir = self.root_dir / deployment_path
         self.create_list = []
         self.update_list = []
@@ -261,6 +258,10 @@ class PipelineScope:
             all_envs = True
         else:
             all_envs = False
+        if all_envs and len(param_file_path.name.split(".")) == 3:
+            if param_file_path.name.split(".")[1] != self.environment:
+                logger.info("Mapping file [{}] is not in scope for environment [{}] and will be ignored.".format(param_file_path.as_posix(),self.environment))
+                return template_path
         param_mapping = Mappings("parameters", region, self.environment, all_envs, self.deployment_dir)
         if param_mapping.mapping is not None:
             template_names = list(param_mapping.mapping.keys())
