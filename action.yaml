@@ -197,7 +197,7 @@ runs:
       if: inputs.branch_type == 'major' && (inputs.job_type == 'Validate' || inputs.job_type == 'Deploy')
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.assumed_role_name }}
+        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.github_assumed_role_name }}
         role-session-name: GADeployPipeline
         aws-region: ${{ env.AWS_REGION }}
       env:
