@@ -408,8 +408,14 @@ class AWSCloudFormationStack:
         return (id, status, changes)
 
     @boto3_error_decorator(logger)
-    def create_change_set(self):
+    def create_change_set(self, action_type):
         logger.info("Creating change set for stack: {}".format(self.stack_name))
+        if action_type == "CREATE":
+            cs_type = "CREATE"
+            desc = "Creation of stack via GitHub Actions"
+        else:
+            cs_type = "UPDATE"
+            desc = "Update to stack via GitHub Actions"
         try:
             if 0 < self.size <= 51200:
                 body = self.load_template_body()
@@ -424,8 +430,9 @@ class AWSCloudFormationStack:
                     ],
                     RoleARN=self.role_arn,
                     ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
-                    Description='Update to stack via GitHub Actions',
-                    ChangeSetType='UPDATE'
+                    Description=desc,
+                    ChangeSetType=cs_type,
+                    OnStackFailure='DO_NOTHING'
                 )
             else:
                 object_url = self.upload_template()
@@ -440,8 +447,9 @@ class AWSCloudFormationStack:
                     ],
                     RoleARN=self.role_arn,
                     ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
-                    Description='Update to stack via GitHub Actions',
-                    ChangeSetType='UPDATE'
+                    Description=desc,
+                    ChangeSetType=cs_type,
+                    OnStackFailure='DO_NOTHING'
                 )
             id = response['Id']
             waiter = self._cf.get_waiter('change_set_create_complete')
@@ -481,9 +489,7 @@ class AWSCloudFormationStack:
     def execute_change_set(self):
         self._cf.execute_change_set(
             ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
-            StackName=self.stack_name,
-            # Retain stack for troubleshooting
-            DisableRollback=True
+            StackName=self.stack_name
         )
 
     #TODO - Add a way to trigger the skipping of failed resources (via config?)
