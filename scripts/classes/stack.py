@@ -477,6 +477,15 @@ class AWSCloudFormationStack:
         logger.info("Deleting change set: {}".format(change_set_id))
         self._cf.delete_change_set(ChangeSetName=change_set_id, StackName=self.stack_name)
 
+    @boto3_error_decorator(logger)
+    def execute_change_set(self):
+        self._cf.execute_change_set(
+            ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
+            StackName=self.stack_name,
+            # Retain stack for troubleshooting
+            DisableRollback=True
+        )
+
     #TODO - Add a way to trigger the skipping of failed resources (via config?)
     @boto3_error_decorator(logger)
     def delete_stack(self, retain_list=[], skip_failed_resources=False):
