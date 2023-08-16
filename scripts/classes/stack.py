@@ -113,7 +113,7 @@ class AWSCloudFormationStack:
             stack_name = "-".join((prefix, stack_suffix))
         # Check if custom stack name is set in mapping file
         if self._template_mapping is not None:
-            name = self._template_mapping.get_mapping_value(filename, "templates")
+            name = self._template_mapping.get_mapping_value(filename, "stacks")
             if name is not None:
                 stack_name = name
         # If stack name contains underscores, replace them with hyphens
