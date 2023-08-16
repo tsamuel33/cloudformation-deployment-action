@@ -196,7 +196,7 @@ class PipelineScope:
         file_parts = file_path.parts
         if "deployments" in file_parts and file_path.suffix in self.valid_template_suffixes:
             # Only consider changes in parameter or template files as updates
-            # to mappings should not trigger actions on their own, and will
+            # to mappings should not trigger actions on their own. Those
             # should be captured by corresponding template/parameter changes
             if file_parts[-2] in ["parameters", "templates"]:
                 file_type = file_parts[-2]
@@ -438,9 +438,11 @@ class PipelineScope:
                         check_period, stack_prefix, protection, upload_bucket_name):
         logger.info("Preparing for stack action: {}".format(action))
         split_list = self.split_by_env(template_list)
+        # Perform actions on templates in all_envs folder first
         result1 = self.deploy_templates(action, split_list[0], account_number, role_name, "all_envs",
                                         check_period, stack_prefix, protection, upload_bucket_name)
         if result1 == "SUCCESS":
+            # Perform actions on environment specific folder after all_envs completion
             result2 = self.deploy_templates(action, split_list[1], account_number, role_name, self.environment,
                                             check_period, stack_prefix, protection, upload_bucket_name)
         else:

@@ -31,7 +31,7 @@ class Mappings:
                 message = "File {} not".format(self.mapping_file_path) + \
                     " found. Default naming convention will be " + \
                     "used to locate parameter files."
-            elif mapping_type == "templates":
+            elif mapping_type == "stacks":
                 message = "File {} not".format(self.mapping_file_path) + \
                     " found. Custom names will not be used for stacks " + \
                     "and previously existing stacks will not be imported " + \
@@ -49,7 +49,7 @@ class Mappings:
                     message = "Key ({}) not found in mapping ".format(key) + \
                         "file. Default parameter file location will be used " + \
                         "if it exists."
-                elif mapping_type == "templates":
+                elif mapping_type == "stacks":
                     message = "Key ({}) not found in mapping ".format(key) + \
                         "file. Default stack naming convention will be used."
                 logger.info(message)

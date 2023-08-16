@@ -72,7 +72,7 @@ class AWSCloudFormationStack:
             all_envs = False
             folder = environment
         self._parameter_mapping = self.get_mapping_file("parameters", region, environment, all_envs)
-        self._template_mapping = self.get_mapping_file("templates", region, environment, all_envs)
+        self._template_mapping = self.get_mapping_file("stacks", region, environment, all_envs)
         if all_envs:
             folder = "all_envs"
         else:
