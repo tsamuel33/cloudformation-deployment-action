@@ -51,6 +51,11 @@ on:
         required: false
         default: 'deployments'
         type: string
+      change_set_before_deploy:
+        description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+        required: false
+        default: 'false'
+        type: string
       aws_region:
         description: Main AWS region used to assume IAM role
         required: false
@@ -97,3 +102,4 @@ jobs:
           rules_repo: ${{ inputs.rules_repo }}
           rules_folder_path: ${{ inputs.rules_folder_path }}
           aws_region: ${{ inputs.aws_region }}
+          change_set_before_deploy: ${{ inputs.change_set_before_deploy }}

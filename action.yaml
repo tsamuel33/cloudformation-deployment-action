@@ -49,6 +49,10 @@ inputs:
     description: Path to the folder containing deployment artifacts
     required: false
     default: 'deployments'
+  change_set_before_deploy:
+    description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+    required: false
+    default: 'false'
   aws_region:
     description: Main AWS region used to assume IAM role
     required: false
@@ -86,6 +90,9 @@ outputs:
   github_assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
     value: ${{ steps.github_assumed_role_name.outputs.github_assumed_role_name }}
+  change_set_before_deploy:
+    description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+    value: ${{ steps.change_set_before_deploy.outputs.change_set_before_deploy }}
 
 runs:
   using: composite
@@ -163,6 +170,14 @@ runs:
       run: |
         SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
+    - name: Get Change Set Preference
+      if: inputs.job_type == 'Setup'
+      working-directory: action
+      id: change_set_before_deploy
+      shell: bash
+      run: |
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var change_set_before_deploy --config_file ${{ inputs.config_file_path }})
+        echo "change_set_before_deploy=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Install cfn-lint
       if: inputs.job_type == 'Lint'
       shell: bash
