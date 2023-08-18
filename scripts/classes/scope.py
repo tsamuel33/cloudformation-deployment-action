@@ -212,13 +212,13 @@ class PipelineScope:
             file_type = None
         return file_type
 
-    @staticmethod
-    def get_file_path(change_type, file):
+    def get_file_path(self, change_type, file):
         if change_type == "D":
             path = Path(file.a_path)
         elif change_type in ["A", "M", "R"]:
             path = Path(file.b_path)
-        return path
+        complete_path = self.root_dir / path
+        return complete_path
 
     @staticmethod
     def load_file(file_path):
