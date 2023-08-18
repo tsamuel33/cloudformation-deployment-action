@@ -196,10 +196,7 @@ class PipelineScope:
     def get_file_type(self, file_path):
         file_parts = file_path.parts
         if "deployments" in file_parts and file_path.suffix in self.valid_template_suffixes:
-            # Only consider changes in parameter or template files as updates
-            # to mappings should not trigger actions on their own. Those
-            # should be captured by corresponding template/parameter changes
-            if file_parts[-2] in ["parameters", "templates"]:
+            if file_parts[-2] in ["parameters", "templates", "mappings"]:
                 file_type = file_parts[-2]
             else:
                 file_type = None
@@ -316,6 +313,9 @@ class PipelineScope:
                     path = self.get_file_path(change_type, file)
                     file_type = self.get_file_type(path)
                     if file_type is not None:
+                        # Only consider changes in parameter or template files as updates
+                        # to mappings should not trigger actions on their own. Those
+                        # should be captured by corresponding template/parameter changes
                         if file_type == "parameters" and change_type != "D":
                             template_path = self.get_template_for_param_mapping(path)
                         elif file_type == "templates":
