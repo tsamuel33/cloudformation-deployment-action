@@ -209,7 +209,7 @@ runs:
         curl -L -o opa https://openpolicyagent.org/downloads/v0.55.0/opa_linux_amd64_static
         chmod 755 ./opa
     - name: Configure AWS credentials
-      if: inputs.branch_type == 'major' && (inputs.job_type == 'Validate' || inputs.job_type == 'Deploy')
+      if: (inputs.branch_type == 'major' && (inputs.job_type == 'Validate' || inputs.job_type == 'Deploy')) || inputs.job_type == 'ChangeSet'
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
         role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.github_assumed_role_name }}
