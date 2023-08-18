@@ -31,6 +31,9 @@ on:
       github_assumed_role_name:
         description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
         value: ${{ jobs.Get_Config_Settings.outputs.github_assumed_role_name }}
+      change_set_before_deploy:
+        description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+        value: ${{ jobs.Get_Config_Settings.outputs.change_set_before_deploy }}
 
 permissions:
   id-token: write
@@ -54,3 +57,4 @@ jobs:
           github_assumed_role_name: ${{ steps.config.outputs.github_assumed_role_name }}
           aws_account_number: ${{ steps.config.outputs.aws_account_number }}
           github_environment: ${{ steps.config.outputs.github_environment }}
+          change_set_before_deploy: ${{ steps.config.outputs.change_set_before_deploy }}

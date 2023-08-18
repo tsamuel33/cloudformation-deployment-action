@@ -72,9 +72,10 @@ class PipelineScope:
         self.create_list = []
         self.update_list = []
         self.delete_list = []
+        self.branch = branch
         self.environment = environment
         self.regions = self.get_regions()
-        self.deploy_tag = "-".join((self.tag_prefix,branch))
+        self.deploy_tag = "-".join((self.tag_prefix,self.branch))
         self.__last_deploy = self.get_last_deployment_commit(self.deploy_tag)
         self.__diff = self.get_diff()
         self.set_scope()
@@ -365,7 +366,7 @@ class PipelineScope:
             if code == 0:
                 logger.info("Linting completed successfully!")
         return code
-    
+
     def render_template_with_parameters(self, template_path, account_number, role_name,
                          check_period, stack_prefix, protection, upload_bucket_name):
         stack = AWSCloudFormationStack(template_path, self.environment,
@@ -422,6 +423,8 @@ class PipelineScope:
                         account_number, role_name, self.deployment_dir, check_period,
                         stack_prefix, protection, upload_bucket_name)
             outcome = stack.run_stack_actions(action)
+            if action == "CHANGE":
+                outcome = self.comment_on_pr(self.branch, outcome)
             if outcome == "SUCCESS":
                 success_count +=1
             elif outcome == "FAILURE":
@@ -486,5 +489,56 @@ class PipelineScope:
         if delete_result == "SUCCESS":
             self.update_deployment_checkpoint()
             logger.info("Deployments completed successfully!")
+            exit_code = 0
+        return exit_code
+
+    def comment_on_pr(self, source_branch, message):
+        commands = [
+            "gh",
+            "pr",
+            source_branch,
+            "--body",
+            message
+        ]
+        code = subprocess.run(commands).returncode
+        if code == 0:
+            status = "SUCCESS"
+        else:
+            status = "FAILURE"
+        return status
+
+    def get_changes(self, account_number, role_name, check_period=15,
+                     stack_prefix=None, protection=False,
+                     upload_bucket_name=None):
+        exit_code = 1
+        if len(self.create_list) > 0:
+            create_result = self.prep_and_deploy(self.create_list, "CHANGE",
+                                                account_number, role_name,
+                                                check_period, stack_prefix,
+                                                protection, upload_bucket_name)
+        else:
+            create_result = "SUCCESS"
+        if create_result == "SUCCESS":
+            if len(self.update_list) > 0:
+                update_result = self.prep_and_deploy(self.update_list, "CHANGE",
+                                                 account_number, role_name,
+                                                 check_period, stack_prefix,
+                                                 protection, upload_bucket_name)
+            else:
+                update_result = "SUCCESS"
+        else:
+            update_result = "CANCELED"
+        if update_result == "SUCCESS":
+            if len(self.delete_list) > 0:
+                delete_result = self.prep_and_deploy(self.delete_list, "CHANGE",
+                                                 account_number, role_name,
+                                                 check_period, stack_prefix,
+                                                 protection, upload_bucket_name)
+            else:
+                delete_result = "SUCCESS"
+        else:
+            delete_result = "CANCELED"
+        if delete_result == "SUCCESS":
+            logger.info("Change sets created successfully!")
             exit_code = 0
         return exit_code

@@ -30,18 +30,27 @@ def validate_templates(configuration, pipeline_object, account_number):
     protection = configuration.get_config_value("termination_protection_enabled", False)
     upload_bucket_name = configuration.get_config_value("cloudformation_upload_bucket_name")
     validation_engine = configuration.get_config_value("policy_as_code_provider")
-    account = account_number
     if validation_engine is None:
         logger.info("No policy as code provider selected. Skipping validation...")
         exit_code = 0
         return exit_code
     if validation_engine.lower() == "guard":
-        exit_code = pipeline_object.cfn_guard_validate(account, role_name, check_period, stack_prefix, protection, upload_bucket_name)
+        exit_code = pipeline_object.cfn_guard_validate(account_number, role_name, check_period, stack_prefix, protection, upload_bucket_name)
     elif validation_engine.lower() == "opa":
-        exit_code = pipeline_object.opa_validate(account, role_name, check_period, stack_prefix, protection, upload_bucket_name)
+        exit_code = pipeline_object.opa_validate(account_number, role_name, check_period, stack_prefix, protection, upload_bucket_name)
     else:
         logger.info("Invalid policy as code provider selected. Skipping validation...")
         exit_code = 0
+    return exit_code
+
+def create_change_sets(configuration, pipeline_object, account_number):
+    role_name = configuration.get_config_value("stack_execution_role_name")
+    check_period = configuration.get_config_value("cf_check_period_seconds", 15)
+    stack_prefix = configuration.get_config_value("stack_name_prefix")
+    protection = configuration.get_config_value("termination_protection_enabled", False)
+    upload_bucket_name = configuration.get_config_value("cloudformation_upload_bucket_name")
+    exit_code = pipeline_object.get_changes(account_number, role_name, check_period,
+                     stack_prefix, protection, upload_bucket_name)
     return exit_code
 
 def deploy(configuration, pipeline_object, account_number):
@@ -56,7 +65,7 @@ def deploy(configuration, pipeline_object, account_number):
     return exit_code
 
 def prepare_to_deploy(job):
-    logger.info("Preparing to {} templates...".format(job))
+    logger.info("Preparing template job: {}...".format(job))
     branch = args['branch']
     config = Configuration(branch, args['config_file'])
     environment = config.environment
@@ -79,6 +88,8 @@ def main(job):
         exit_code = lint_templates(pipeline)
     elif job.lower() == 'validate':
         exit_code = validate_templates(config, pipeline, args['account_number'])
+    elif job.lower() == 'changeset':
+        exit_code = create_change_sets(config, pipeline, args['account_number'])
     elif job.lower() == 'deploy':
         exit_code = deploy(config, pipeline, args['account_number'])
     else:
