@@ -227,6 +227,8 @@ runs:
       working-directory: action
       shell: bash
       run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job ChangeSet --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
+      env:
+        GH_TOKEN: ${{ github.token }}
     - name: Deploy Templates
       if: inputs.branch_type == 'major' && inputs.job_type == 'Deploy' && github.event_name == 'push'
       working-directory: action
