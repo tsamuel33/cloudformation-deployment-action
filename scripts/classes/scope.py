@@ -69,10 +69,6 @@ class PipelineScope:
 
     def __init__(self, branch, environment, deployment_path, rules_path) -> None:
         self.deployment_dir = self.root_dir / deployment_path
-        #DEBUGGING
-        logger.error(self.root_dir.as_posix())
-        logger.error(deployment_path)
-        logger.error(self.deployment_dir.as_posix())
         self.create_list = []
         self.update_list = []
         self.delete_list = []
@@ -314,8 +310,6 @@ class PipelineScope:
             for change_type in change_types:
                 diff_files = self.__diff.iter_change_type(change_type)
                 for file in diff_files:
-                    #DEBUG
-                    print(file)
                     path = self.get_file_path(change_type, file)
                     file_type = self.get_file_type(path)
                     if file_type is not None:
@@ -502,6 +496,7 @@ class PipelineScope:
         commands = [
             "gh",
             "pr",
+            "comment",
             source_branch,
             "--body",
             message
