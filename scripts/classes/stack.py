@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 from sys import exit
+import subprocess
 from time import sleep
 
 import boto3
@@ -398,19 +399,24 @@ class AWSCloudFormationStack:
 
     @boto3_error_decorator(logger)
     def describe_change_set(self, change_set_id=None):
-        if change_set_id is None:
-            change_set_id = "-".join((self.changeset_prefix,self.stack_name))
-        logger.info("Getting details for change set: {}".format(change_set_id))
-        response = self._cf.describe_change_set(ChangeSetName=change_set_id, StackName=self.stack_name)
-        id = response['ChangeSetId']
-        status = response['Status']
-        changes = response['Changes']
-        return (id, status, changes)
+        try:
+            if change_set_id is None:
+                change_set_id = "-".join((self.changeset_prefix,self.stack_name))
+            logger.info("Getting details for change set: {}".format(change_set_id))
+            response = self._cf.describe_change_set(ChangeSetName=change_set_id, StackName=self.stack_name)
+            id = response['ChangeSetId']
+            status = response['Status']
+            changes = response['Changes']
+            return (id, status, changes)
+        except self._cf.exceptions.ChangeSetNotFoundException:
+            logger.error("Change Set not found")
+            return (None, None, None)
 
     @boto3_error_decorator(logger)
-    def create_change_set(self, action_type):
+    def create_change_set(self):
         logger.info("Creating change set for stack: {}".format(self.stack_name))
-        if action_type == "CREATE":
+        stack_status = self.get_stack()
+        if stack_status is None:
             cs_type = "CREATE"
             desc = "Creation of stack via GitHub Actions"
         else:
@@ -484,13 +490,56 @@ class AWSCloudFormationStack:
             change_set_id = "-".join((self.changeset_prefix,self.stack_name))
         logger.info("Deleting change set: {}".format(change_set_id))
         self._cf.delete_change_set(ChangeSetName=change_set_id, StackName=self.stack_name)
+        return None
 
     @boto3_error_decorator(logger)
     def execute_change_set(self):
-        self._cf.execute_change_set(
-            ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
-            StackName=self.stack_name
-        )
+        try:
+            self._cf.execute_change_set(
+                ChangeSetName="-".join((self.changeset_prefix,self.stack_name)),
+                StackName=self.stack_name
+            )
+            return None
+        except self._cf.exceptions.InvalidChangeSetStatusException as err:
+            err_message = err.response['Error']['Message']
+            completed = "cannot be executed in its current execution status of [EXECUTE_COMPLETE]"
+            if completed in err_message:
+                logger.info("Change Set already executed")
+                return "SUCCESS"
+            else:
+                raise err
+        except self._cf.exceptions.ChangeSetNotFoundException as err:
+            log = "Change Set not found. Executing stack action directly..."
+            logger.info(log)
+            if self.template_path.exists():
+                outcome = self.run_stack_actions(self, "UPDATE")
+            else:
+                outcome = self.run_stack_actions(self, "DELETE")
+            return outcome
+
+    def get_deletion_resources(self):
+        response = self._cf.describe_stack_resources(StackName=self.stack_name)
+        deletion_items = [{'LogicalResourceId': item['LogicalResourceId'], 'PhysicalResourceId': item['PhysicalResourceId']} for item in response['StackResources']]
+        output = json.dumps(deletion_items, indent=2, default=str)
+        print(output)
+
+    def generate_pr_comment(self):
+        if self.template_path.exists():
+            intro = "Changes for stack: {}".format(self.stack_name)
+            change_set_id = self.create_change_set()
+            if change_set_id is not None:
+                changes = self.describe_change_set()[2]
+                details = json.dumps(changes, indent=2, default=str)
+            else:
+                details = "No changes."
+        else:
+            intro = "The following resources will be deleted from stack: {}".format(self.stack_name)
+            response = self._cf.describe_stack_resources(StackName=self.stack_name)
+            deletion_items = [{'LogicalResourceId': item['LogicalResourceId'], 'PhysicalResourceId': item['PhysicalResourceId']} for item in response['StackResources']]
+            details = json.dumps(deletion_items, indent=2, default=str)
+        output = intro + '\n' + details
+        return output
+
 
     #TODO - Add a way to trigger the skipping of failed resources (via config?)
     @boto3_error_decorator(logger)
@@ -513,8 +562,13 @@ class AWSCloudFormationStack:
         )
         return None
 
-    def run_stack_actions(self, action_type):
-        if action_type == "CREATE":
+    def run_stack_actions(self, action_type, change_set=False):
+        if action_type == "CHANGE":
+            status = self.generate_pr_comment()
+        elif change_set:
+            if action_type in ["CREATE", "UPDATE"]:
+                status = self.execute_change_set()
+        elif action_type == "CREATE":
             status = self.create_stack()
         elif action_type == "UPDATE":
             status = self.update_stack()
@@ -523,5 +577,6 @@ class AWSCloudFormationStack:
         if status is not None:
             outcome = status
         else:
+            #TODO - Update this to handle new "CHANGE" action type
             outcome = self.monitor_stack_progress(action_type)
         return outcome
