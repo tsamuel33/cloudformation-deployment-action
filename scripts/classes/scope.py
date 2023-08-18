@@ -69,6 +69,10 @@ class PipelineScope:
 
     def __init__(self, branch, environment, deployment_path, rules_path) -> None:
         self.deployment_dir = self.root_dir / deployment_path
+        #DEBUGGING
+        logger.error(self.root_dir.as_posix())
+        logger.error(deployment_path.as_posix())
+        logger.error(self.deployment_dir.as_posix())
         self.create_list = []
         self.update_list = []
         self.delete_list = []
