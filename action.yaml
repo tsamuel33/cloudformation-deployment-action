@@ -120,7 +120,7 @@ runs:
       id: branch_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
         echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get GitHub Environment
       if: inputs.job_type == 'Setup'
@@ -128,7 +128,7 @@ runs:
       id: github_environment
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_environment --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_environment --config_file ${{ inputs.config_file_path }})
         echo "github_environment=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Type
       if: inputs.job_type == 'Setup'
@@ -136,7 +136,7 @@ runs:
       id: github_secret_type
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
         echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Validation Type
       if: inputs.job_type == 'Setup'
@@ -144,7 +144,7 @@ runs:
       id: policy_as_code_provider
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
         echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Account Number
       if: inputs.job_type == 'Setup'
@@ -152,7 +152,7 @@ runs:
       id: aws_account_number
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var aws_account_number --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var aws_account_number --config_file ${{ inputs.config_file_path }})
         echo "aws_account_number=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Secret Name
       if: inputs.job_type == 'Setup'
@@ -160,7 +160,7 @@ runs:
       id: account_number_secret_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
         echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Assumed Role Name
       if: inputs.github_assumed_role_name == '' || inputs.job_type == 'Setup'
@@ -168,7 +168,7 @@ runs:
       id: github_assumed_role_name
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
         echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Get Change Set Preference
       if: inputs.job_type == 'Setup'
@@ -176,7 +176,7 @@ runs:
       id: change_set_before_deploy
       shell: bash
       run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.ref_name }} --github_env_var change_set_before_deploy --config_file ${{ inputs.config_file_path }})
+        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var change_set_before_deploy --config_file ${{ inputs.config_file_path }})
         echo "change_set_before_deploy=${SETTING}" >> "$GITHUB_OUTPUT"
     - name: Install cfn-lint
       if: inputs.job_type == 'Lint'
@@ -194,7 +194,7 @@ runs:
       if: inputs.job_type == 'Lint'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --job Lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --job Lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
     - name: Install cfn-guard
       if: inputs.job_type == 'Validate' && inputs.policy_as_code_provider == 'guard'
       shell: bash
@@ -221,12 +221,12 @@ runs:
       if: (inputs.policy_as_code_provider == 'guard' || inputs.policy_as_code_provider == 'opa') && inputs.job_type == 'Validate'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
     - name: Create Change Sets
       if: inputs.job_type == 'ChangeSet' && github.event_name == 'pull_request'
       working-directory: action
       shell: bash
-      run: python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job ChangeSet --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
+      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job ChangeSet --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
       env:
         GH_TOKEN: ${{ github.token }}
     - name: Deploy Templates
@@ -234,4 +234,4 @@ runs:
       working-directory: action
       shell: bash
       run: |
-        python -m scripts.deploy --branch ${{ github.ref_name }} --account_number ${{ inputs.aws_account_number }} --job Deploy --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
+        python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.aws_account_number }} --job Deploy --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
