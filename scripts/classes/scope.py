@@ -494,7 +494,8 @@ class PipelineScope:
 
     def comment_on_pr(self, target_branch, message):
         #Temporarily change directory to checked out template for GH CLI commands
-        os.chdir(self.root_dir)
+        os.chdir('../main')
+        print("Current directory is: {}".format(Path.cwd().as_posix()))
         number_commands = [ "".join(("gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == \"", target_branch, "\") | .number'"))]
         pr_num = subprocess.run(number_commands, shell=True, capture_output=True, text=True).stdout
         commands = [
