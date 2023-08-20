@@ -493,6 +493,8 @@ class PipelineScope:
         return exit_code
 
     def comment_on_pr(self, target_branch, message):
+        #Temporarily change directory to checked out template for GH CLI commands
+        os.chdir(self.root_dir)
         number_commands = [ "".join(("gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == \"", target_branch, "\") | .number'"))]
         pr_num = subprocess.run(number_commands, shell=True, capture_output=True, text=True).stdout
         commands = [
@@ -504,6 +506,8 @@ class PipelineScope:
             message
         ]
         code = subprocess.run(commands).returncode
+        #Change back to action directory
+        os.chdir('../action')
         if code == 0:
             status = "SUCCESS"
         else:
