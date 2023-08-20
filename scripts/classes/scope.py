@@ -494,12 +494,8 @@ class PipelineScope:
 
     def comment_on_pr(self, target_branch, message):
         #gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == "dev") | .number'
-        number_commands = [
-            "gh", "pr", "status", "--json", "baseRefName,number", "--jq",
-            ".currentBranch"
-        ]
-        x = subprocess.run(number_commands).stdout
-        print(x)
+        number_commands = [ "".join(("gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == \"", target_branch, "\") | .number'"))]
+        pr_num = subprocess.run(number_commands, shell=True, capture_output=True, text=True).stdout
         # commands = [
         #     "gh",
         #     "pr",
