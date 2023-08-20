@@ -493,23 +493,22 @@ class PipelineScope:
         return exit_code
 
     def comment_on_pr(self, target_branch, message):
-        #gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == "dev") | .number'
         number_commands = [ "".join(("gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == \"", target_branch, "\") | .number'"))]
         pr_num = subprocess.run(number_commands, shell=True, capture_output=True, text=True).stdout
-        # commands = [
-        #     "gh",
-        #     "pr",
-        #     "comment",
-        #     target_branch,
-        #     "--body",
-        #     message
-        # ]
-        # code = subprocess.run(commands).returncode
-        # if code == 0:
-        #     status = "SUCCESS"
-        # else:
-        #     status = "FAILURE"
-        # return status
+        commands = [
+            "gh",
+            "pr",
+            "comment",
+            pr_num,
+            "--body",
+            message
+        ]
+        code = subprocess.run(commands).returncode
+        if code == 0:
+            status = "SUCCESS"
+        else:
+            status = "FAILURE"
+        return status
 
     def get_changes(self, account_number, role_name, check_period=15,
                      stack_prefix=None, protection=False,
