@@ -424,7 +424,6 @@ class PipelineScope:
                         stack_prefix, protection, upload_bucket_name)
             outcome = stack.run_stack_actions(action)
             if action == "CHANGE":
-                logger.warning("Calling from scope")
                 outcome = self.comment_on_pr(self.branch, outcome)
             if outcome == "SUCCESS":
                 success_count +=1
@@ -495,6 +494,7 @@ class PipelineScope:
 
     def comment_on_pr(self, target_branch, message):
         #Temporarily change directory to checked out template for GH CLI commands
+        subprocess.run(["git", "branch", "-a"])
         os.chdir('../main')
         print("Current directory is: {}".format(Path.cwd().as_posix()))
         number_commands = [ "".join(("gh pr status --json baseRefName,number -q '.currentBranch | select(.baseRefName == \"", target_branch, "\") | .number'"))]
