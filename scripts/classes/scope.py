@@ -424,6 +424,7 @@ class PipelineScope:
                         stack_prefix, protection, upload_bucket_name)
             outcome = stack.run_stack_actions(action)
             if action == "CHANGE":
+                logger.warning("Calling from scope")
                 outcome = self.comment_on_pr(self.branch, outcome)
             if outcome == "SUCCESS":
                 success_count +=1
