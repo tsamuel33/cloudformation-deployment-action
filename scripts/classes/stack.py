@@ -533,11 +533,11 @@ class AWSCloudFormationStack:
             else:
                 details = "No changes."
         else:
-            intro = "The following resources will be deleted from stack: {}".format(self.stack_name)
+            intro = "The following resources will be deleted from stack: **{}**".format(self.stack_name)
             response = self._cf.describe_stack_resources(StackName=self.stack_name)
             deletion_items = [{'LogicalResourceId': item['LogicalResourceId'], 'PhysicalResourceId': item['PhysicalResourceId']} for item in response['StackResources']]
             details = json.dumps(deletion_items, indent=2, default=str)
-        output = intro + '\n' + details
+        output = intro + '\n' + '```java' + '\n' + details + '\n' + '```'
         return output
 
 
