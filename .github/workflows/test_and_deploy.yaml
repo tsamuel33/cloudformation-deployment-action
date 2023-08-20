@@ -78,7 +78,8 @@ on:
 
 permissions:
   id-token: write
-  contents: write
+  contents: read
+  pull-requests: write
 
 jobs:
   Perform_Template_Action:
