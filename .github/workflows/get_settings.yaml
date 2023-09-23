@@ -48,6 +48,12 @@ jobs:
   Get_Config_Settings:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Template Repo
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          path: main
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || null }}
       - name: Get Config Settings - Composite
         if: inputs.action_mode == 'composite'
         id: config_composite
@@ -55,7 +61,7 @@ jobs:
         with:
           job_type: Setup
           config_file_path: ${{ inputs.config_file_path }}
-      - name: Get Config Settings
+      - name: Get Config Settings - Docker
         id: config_docker
         if: inputs.action_mode == 'docker'
         uses: ./actions/get-settings-docker
