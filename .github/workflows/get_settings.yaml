@@ -7,6 +7,11 @@ on:
         required: false
         default: 'config'
         type: string
+      action_mode:
+        description: The type of GitHub Action to run. Valid values are 'composite' and 'docker'
+        required: false
+        default: composite
+        type: string
     outputs:
       aws_account_number:
         description: ID of target AWS account
@@ -43,18 +48,26 @@ jobs:
   Get_Config_Settings:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Config Settings
-        id: config
+      - name: Get Config Settings - Composite
+        if: inputs.action_mode == 'composite'
+        id: config_composite
         uses: tsamuel33/cloudformation-deployment-action@feature/local-testing
         with:
           job_type: Setup
           config_file_path: ${{ inputs.config_file_path }}
+      - name: Get Config Settings
+        id: config_docker
+        if: inputs.action_mode == 'docker'
+        uses: ./actions/get-settings-docker
+        with:
+          job_type: Setup
+          config_file_path: ${{ inputs.config_file_path }}
     outputs:
-          branch_type: ${{ steps.config.outputs.branch_type }}
-          github_secret_type: ${{ steps.config.outputs.github_secret_type }}
-          policy_as_code_provider: ${{ steps.config.outputs.policy_as_code_provider }}
-          account_number_secret_name: ${{ steps.config.outputs.account_number_secret_name }}
-          github_assumed_role_name: ${{ steps.config.outputs.github_assumed_role_name }}
-          aws_account_number: ${{ steps.config.outputs.aws_account_number }}
-          github_environment: ${{ steps.config.outputs.github_environment }}
-          change_set_before_deploy: ${{ steps.config.outputs.change_set_before_deploy }}
+          branch_type: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.branch_type || steps.config_docker.outputs.branch_type }}
+          github_secret_type: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.github_secret_type || steps.config_docker.outputs.github_secret_type }}
+          policy_as_code_provider: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.policy_as_code_provider || steps.config_docker.outputs.policy_as_code_provider}}
+          account_number_secret_name: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.account_number_secret_name || steps.config_docker.outputs.account_number_secret_name }}
+          github_assumed_role_name: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.github_assumed_role_name || steps.config_docker.outputs.github_assumed_role_name }}
+          aws_account_number: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.aws_account_number || steps.config_docker.outputs.aws_account_number }}
+          github_environment: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.github_environment || steps.config_docker.outputs.github_environment}}
+          change_set_before_deploy: ${{ inputs.action_mode == 'composite' && steps.config_composite.outputs.change_set_before_deploy || steps.config_docker.outputs.change_set_before_deploy }}

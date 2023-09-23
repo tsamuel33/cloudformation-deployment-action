@@ -1,0 +1,106 @@
+name: Docker Get Settings
+description: >-
+  Perform the Get Settings action using a Docker container
+
+inputs:
+  aws_partition:
+    description: 'The AWS partition in which the templates will be deployed'
+    default: 'aws'
+    required: false
+  job_type:
+    description: The type of action being performed on the templates
+    required: true
+  branch_type:
+    description: >-
+      The type of branch being assessed. Valid values are 'major' (deployment branch)
+      or 'minor' (feature branch)
+    required: false
+    default: ''
+  github_secret_type:
+    description: The type of secret containing the AWS account number (repository, environment, or organization)
+    required: false
+    default: ''
+  policy_as_code_provider:
+    description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+    required: false
+    default: ''
+  account_number_secret_name:
+    description: Name of the GitHub secret containing the AWS account number
+    required: false
+    default: ''
+  aws_account_number:
+    description: ID number of the target AWS account
+    required: false
+    default: ''
+  github_environment:
+    description: Name of GitHub environment associated with the target branch
+    required: false
+    default: ''
+  github_assumed_role_name:
+    description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+    required: false
+    default: ''
+  config_file_path:
+    description: Path to the config file from the root of your GitHub repository
+    required: false
+    default: 'config'
+  deployment_folder_path:
+    description: Path to the folder containing deployment artifacts
+    required: false
+    default: 'deployments'
+  change_set_before_deploy:
+    description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+    required: false
+    default: 'false'
+  aws_region:
+    description: Main AWS region used to assume IAM role
+    required: false
+    default: 'us-east-1'
+  rules_repo:
+    description: GitHub repo containing your policy as code rules
+    required: false
+    default: ''
+  rules_folder_path:
+    description: Path to the folder containing your policy as code rules
+    required: false
+    default: ''
+
+outputs:
+  branch_type:
+    description: >-
+      The type of branch being assessed. Valid values are 'major' (deployment branch)
+      or 'minor' (feature branch)
+  github_secret_type:
+    description: The type of secret containing the AWS account number (repository, environment, or organization)
+  policy_as_code_provider:
+    description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
+  account_number_secret_name:
+    description: Name of the GitHub secret containing the AWS account number
+  aws_account_number:
+    description: ID of target AWS account
+  github_environment:
+    description: Name of GitHub environment associated with the target branch
+  github_assumed_role_name:
+    description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
+  change_set_before_deploy:
+    description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.job_type }}
+    - ${{ inputs.aws_partition }}
+    - ${{ inputs.branch_type }}
+    - ${{ inputs.github_secret_type }}
+    - ${{ inputs.policy_as_code_provider }}
+    - ${{ inputs.account_number_secret_name }}
+    - ${{ inputs.aws_account_number }}
+    - ${{ inputs.github_environment }}
+    - ${{ inputs.github_assumed_role_name }}
+    - ${{ inputs.config_file_path }}
+    - ${{ inputs.deployment_folder_path }}
+    - ${{ inputs.change_set_before_deploy }}
+    - ${{ inputs.aws_region }}
+    - ${{ inputs.rules_repo }}
+    - ${{ inputs.rules_folder_path }}
