@@ -1,7 +1,6 @@
-name: CloudFormation Testing and Deployment
+name: Docker Get Settings
 description: >-
-  Action to Lint, Validate vs. policy as code (optional) and deploy
-  CloudFormation templates
+  Perform the Get Settings action using a Docker container
 
 inputs:
   aws_partition:
@@ -71,168 +70,37 @@ outputs:
     description: >-
       The type of branch being assessed. Valid values are 'major' (deployment branch)
       or 'minor' (feature branch)
-    value: ${{ steps.branch_type.outputs.branch_type }}
   github_secret_type:
     description: The type of secret containing the AWS account number (repository, environment, or organization)
-    value: ${{ steps.github_secret_type.outputs.github_secret_type }}
   policy_as_code_provider:
     description: The software used for policy as code validations. Valid values are 'guard' (cfn-guard) or 'opa' (Open Policy Agent)
-    value: ${{ steps.policy_as_code_provider.outputs.policy_as_code_provider }}
   account_number_secret_name:
     description: Name of the GitHub secret containing the AWS account number
-    value: ${{ steps.account_number_secret_name.outputs.account_number_secret_name }}
   aws_account_number:
     description: ID of target AWS account
-    value: ${{ steps.aws_account_number.outputs.aws_account_number }}
   github_environment:
     description: Name of GitHub environment associated with the target branch
-    value: ${{ steps.github_environment.outputs.github_environment }}
   github_assumed_role_name:
     description: Path and name of the AWS IAM role assumed by the pipeline. Formatted as PATH/ROLE_NAME
-    value: ${{ steps.github_assumed_role_name.outputs.github_assumed_role_name }}
   change_set_before_deploy:
     description: Determines if a change set should be created prior to deployments. Outputs changes to a comment on the pull request.
-    value: ${{ steps.change_set_before_deploy.outputs.change_set_before_deploy }}
 
 runs:
-  using: composite
-  steps:
-    - name: Checkout Template Repo
-      uses: actions/checkout@v3
-      with:
-        path: main
-        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || null }}
-    - name: Checkout Action Repo
-      uses: actions/checkout@v3
-      with:
-        repository: tsamuel33/cloudformation-deployment-action
-        path: action
-        token: ${{ github.token }}
-    - name: Checkout Rules Repo
-      if: inputs.rules_repo != '' && inputs.rules_folder_path != '' && inputs.job_type == 'Validate'
-      uses: actions/checkout@v3
-      with:
-        repository: ${{ inputs.rules_repo }}
-        path: rules
-        token: ${{ github.token }}
-    - name: Get Branch Type
-      if: inputs.branch_type == '' || inputs.job_type == 'Setup'
-      working-directory: action
-      id: branch_type
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var branch_type --config_file ${{ inputs.config_file_path }})
-        echo "branch_type=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get GitHub Environment
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: github_environment
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_environment --config_file ${{ inputs.config_file_path }})
-        echo "github_environment=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Secret Type
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: github_secret_type
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_secret_type --config_file ${{ inputs.config_file_path }})
-        echo "github_secret_type=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Validation Type
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: policy_as_code_provider
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var policy_as_code_provider --config_file ${{ inputs.config_file_path }})
-        echo "policy_as_code_provider=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Account Number
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: aws_account_number
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var aws_account_number --config_file ${{ inputs.config_file_path }})
-        echo "aws_account_number=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Secret Name
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: account_number_secret_name
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var account_number_secret_name --config_file ${{ inputs.config_file_path }})
-        echo "account_number_secret_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Assumed Role Name
-      if: inputs.github_assumed_role_name == '' || inputs.job_type == 'Setup'
-      working-directory: action
-      id: github_assumed_role_name
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var github_assumed_role_name --config_file ${{ inputs.config_file_path }})
-        echo "github_assumed_role_name=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Get Change Set Preference
-      if: inputs.job_type == 'Setup'
-      working-directory: action
-      id: change_set_before_deploy
-      shell: bash
-      run: |
-        SETTING=$(python -m scripts.env_setup --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --github_env_var change_set_before_deploy --config_file ${{ inputs.config_file_path }})
-        echo "change_set_before_deploy=${SETTING}" >> "$GITHUB_OUTPUT"
-    - name: Install cfn-lint
-      if: inputs.job_type == 'Lint'
-      shell: bash
-      run: |
-        echo "Installing cfn-lint via pip..."
-        pip install cfn-lint --quiet
-    - name: Install Validation/Deployment Dependencies
-      if: inputs.job_type != 'Setup'
-      shell: bash
-      run: |
-        echo "Installing boto3, GitPython, and jsonpath-ng via pip..."
-        pip install boto3 GitPython jsonpath-ng --quiet
-    - name: Lint Templates
-      if: inputs.job_type == 'Lint'
-      working-directory: action
-      shell: bash
-      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --job Lint --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
-    - name: Install cfn-guard
-      if: inputs.job_type == 'Validate' && inputs.policy_as_code_provider == 'guard'
-      shell: bash
-      run: |
-        curl --proto ''=https'' --tlsv1.2 -sSf https://raw.githubusercontent.com/aws-cloudformation/cloudformation-guard/main/install-guard.sh | sh
-        GUARD_DIR=~/.guard/bin
-        echo $GUARD_DIR >> $GITHUB_PATH
-    - name: Install Open Policy Agent
-      if: inputs.job_type == 'Validate' && inputs.policy_as_code_provider == 'opa'
-      shell: bash
-      run: |
-        curl -L -o opa https://openpolicyagent.org/downloads/v0.55.0/opa_linux_amd64_static
-        chmod 755 ./opa
-    - name: Configure AWS credentials
-      if: (inputs.branch_type == 'major' && (inputs.job_type == 'Validate' || inputs.job_type == 'Deploy')) || inputs.job_type == 'ChangeSet'
-      uses: aws-actions/configure-aws-credentials@v1-node16
-      with:
-        role-to-assume: arn:${{ inputs.aws_partition }}:iam::${{ inputs.aws_account_number }}:role/${{ inputs.github_assumed_role_name }}
-        role-session-name: GADeployPipeline
-        aws-region: ${{ env.AWS_REGION }}
-      env:
-        AWS_REGION : ${{ inputs.aws_region }}
-    - name: Policy as Code Validation
-      if: (inputs.policy_as_code_provider == 'guard' || inputs.policy_as_code_provider == 'opa') && inputs.job_type == 'Validate'
-      working-directory: action
-      shell: bash
-      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job Validate --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }} --rules_folder ${{ inputs.rules_folder_path }}
-    - name: Create Change Sets
-      if: inputs.job_type == 'ChangeSet' && github.event_name == 'pull_request'
-      working-directory: action
-      shell: bash
-      run: python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.branch_type == 'major' && inputs.aws_account_number || '123456789012' }} --job ChangeSet --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
-      env:
-        GH_TOKEN: ${{ github.token }}
-    - name: Deploy Templates
-      if: inputs.branch_type == 'major' && inputs.job_type == 'Deploy' && github.event_name == 'push'
-      working-directory: action
-      shell: bash
-      run: |
-        python -m scripts.deploy --branch ${{ github.event_name == 'pull_request' &&  github.base_ref  || github.ref_name }}  --account_number ${{ inputs.aws_account_number }} --job Deploy --config_file ${{ inputs.config_file_path }} --deployment_folder ${{ inputs.deployment_folder_path }}
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.job_type }}
+    - ${{ inputs.aws_partition }}
+    - ${{ inputs.branch_type }}
+    - ${{ inputs.github_secret_type }}
+    - ${{ inputs.policy_as_code_provider }}
+    - ${{ inputs.account_number_secret_name }}
+    - ${{ inputs.aws_account_number }}
+    - ${{ inputs.github_environment }}
+    - ${{ inputs.github_assumed_role_name }}
+    - ${{ inputs.config_file_path }}
+    - ${{ inputs.deployment_folder_path }}
+    - ${{ inputs.change_set_before_deploy }}
+    - ${{ inputs.aws_region }}
+    - ${{ inputs.rules_repo }}
+    - ${{ inputs.rules_folder_path }}
