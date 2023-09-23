@@ -64,7 +64,7 @@ jobs:
       - name: Get Config Settings - Docker
         id: config_docker
         if: inputs.action_mode == 'docker'
-        uses: ./actions/get-settings-docker
+        uses: tsamuel33/cloudformation-deployment-action/actions/get-settings-docker@docker-action
         with:
           job_type: Setup
           config_file_path: ${{ inputs.config_file_path }}
