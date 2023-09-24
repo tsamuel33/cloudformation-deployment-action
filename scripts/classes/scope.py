@@ -16,11 +16,6 @@ logger = logging.getLogger(Path(__file__).name)
 
 class PipelineScope:
 
-    root_dir = Path(__file__).parents[3] / "main"
-    rules_root = Path(__file__).parents[3] / "rules"
-    __repo = Repo(root_dir)
-    __remote = __repo.remote()
-    __head_commit = __repo.head.commit
     tag_prefix = "cf-deployment"
     valid_template_suffixes = [
         ".yaml",
@@ -67,7 +62,12 @@ class PipelineScope:
     ]
 
 
-    def __init__(self, branch, environment, deployment_path, rules_path) -> None:
+    def __init__(self, branch, environment, deployment_path, rules_path, root_depth : int = 3) -> None:
+        self.root_dir = Path(__file__).parents[root_depth] / "main"
+        self.rules_root = Path(__file__).parents[root_depth] / "rules"
+        self.__repo = Repo(self.root_dir)
+        self.__remote = self.__repo.remote()
+        self.__head_commit = self.__repo.head.commit
         self.deployment_dir = self.root_dir / deployment_path
         self.create_list = []
         self.update_list = []

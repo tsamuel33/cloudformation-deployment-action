@@ -28,7 +28,6 @@ class Configuration:
     #     Object representing the configuration file
     """
 
-    root_dir = Path(__file__).parents[3] / "main"
     required_settings = [
         "environment",
         {"github_secret_type": ["repository", "environment", "organization"]},
@@ -36,7 +35,8 @@ class Configuration:
         "account_number_secret_name"
     ]
 
-    def __init__(self, branch : str, config_path : str):
+    def __init__(self, branch : str, config_path : str, root_depth : int = 3):
+        self.root_dir = Path(__file__).parents[root_depth] / "main"
         self.config_file = self.root_dir / config_path
         self.config = self.initialize_config()
         self.section = branch

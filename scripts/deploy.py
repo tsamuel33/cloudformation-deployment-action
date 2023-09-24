@@ -17,6 +17,7 @@ parser.add_argument('--job', type=str, help='Name of GitHub Action job to run', 
 parser.add_argument('--config_file', type=str, help='Path to the config file in your GitHub repo', required=True)
 parser.add_argument('--deployment_folder', type=str, help='Path to the folder containing deployment artifacts', required=True)
 parser.add_argument('--rules_folder', type=str, help='Path to the folder policy as code rules', default='', required=False)
+parser.add_argument('--action_mode', type=str, help='The type of GitHub Action', required=False, default='composite')
 args = vars(parser.parse_args())
 
 def lint_templates(pipeline_object):
@@ -66,10 +67,14 @@ def deploy(configuration, pipeline_object, account_number):
 
 def prepare_to_deploy(job):
     logger.info("Preparing template job: {}...".format(job))
+    if args['action_mode'] == 'composite':
+        depth = 3
+    elif args['action_mode'] == 'docker':
+        depth = 2
     branch = args['branch']
-    config = Configuration(branch, args['config_file'])
+    config = Configuration(branch, args['config_file'], depth)
     environment = config.environment
-    pipeline = PipelineScope(branch, environment, args['deployment_folder'], args['rules_folder'])
+    pipeline = PipelineScope(branch, environment, args['deployment_folder'], args['rules_folder'], depth)
     return (config, pipeline)
 
 def main(job):
