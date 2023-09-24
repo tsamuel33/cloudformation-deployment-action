@@ -90,17 +90,17 @@ runs:
   image: Dockerfile
   args:
     - ${{ inputs.job_type }}
-    - ${{ inputs.aws_partition }}
     - ${{ inputs.branch_type }}
+    - ${{ inputs.github_environment }}
     - ${{ inputs.github_secret_type }}
     - ${{ inputs.policy_as_code_provider }}
-    - ${{ inputs.account_number_secret_name }}
     - ${{ inputs.aws_account_number }}
-    - ${{ inputs.github_environment }}
+    - ${{ inputs.account_number_secret_name }}
     - ${{ inputs.github_assumed_role_name }}
-    - ${{ inputs.config_file_path }}
-    - ${{ inputs.deployment_folder_path }}
     - ${{ inputs.change_set_before_deploy }}
+    - ${{ inputs.config_file_path }}
+    - ${{ inputs.aws_partition }}
+    - ${{ inputs.deployment_folder_path }}
     - ${{ inputs.aws_region }}
     - ${{ inputs.rules_repo }}
     - ${{ inputs.rules_folder_path }}
